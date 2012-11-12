@@ -49,20 +49,23 @@ static void print_result(const char *name, struct result_info *info)
 {
 	puts("----------------------------------------"
 	     "---------------------------------------");
-	printf("%s: %d files, %d codes, %d decoded (%d failures), "
-	       "%d%% success rate\n",
+	printf("%s: %d files, %d codes, %d decoded (%d failures)",
 	       name, info->file_count, info->id_count, info->decode_count,
-	       (info->id_count - info->decode_count),
-	       (info->decode_count * 100 + info->id_count / 2) /
-		info->id_count);
+	       (info->id_count - info->decode_count));
+	if (info->id_count)
+		printf(", %d%% success rate",
+		       (info->decode_count * 100 + info->id_count / 2) /
+			info->id_count);
+	printf("\n");
 	printf("Total time [load: %ld, identify: %ld, total: %ld]\n",
 	       CLOCK_TO_MS(info->load_time),
 	       CLOCK_TO_MS(info->identify_time),
 	       CLOCK_TO_MS(info->total_time));
-	printf("Average time [load: %ld, identify: %ld, total: %ld]\n",
-	       CLOCK_TO_MS(info->load_time / info->file_count),
-	       CLOCK_TO_MS(info->identify_time / info->file_count),
-	       CLOCK_TO_MS(info->total_time / info->file_count));
+	if (info->file_count)
+		printf("Average time [load: %ld, identify: %ld, total: %ld]\n",
+		       CLOCK_TO_MS(info->load_time / info->file_count),
+		       CLOCK_TO_MS(info->identify_time / info->file_count),
+		       CLOCK_TO_MS(info->total_time / info->file_count));
 }
 
 static void add_result(struct result_info *sum, struct result_info *inf)
