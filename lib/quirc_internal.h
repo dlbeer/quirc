@@ -23,7 +23,7 @@
 #define QUIRC_PIXEL_BLACK	1
 #define QUIRC_PIXEL_REGION	2
 
-#define QUIRC_MAX_REGIONS	254
+#define QUIRC_MAX_REGIONS	2048
 #define QUIRC_MAX_CAPSTONES	32
 #define QUIRC_MAX_GRIDS		8
 
@@ -66,6 +66,7 @@ struct quirc_grid {
 
 struct quirc {
 	uint8_t			*image;
+	int			*region_info;
 	int			w;
 	int			h;
 

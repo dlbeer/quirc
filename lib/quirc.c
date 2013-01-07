@@ -38,6 +38,8 @@ void quirc_destroy(struct quirc *q)
 {
 	if (q->image)
 		free(q->image);
+	if (q->region_info)
+		free(q->region_info);
 
 	free(q);
 }
@@ -45,11 +47,16 @@ void quirc_destroy(struct quirc *q)
 int quirc_resize(struct quirc *q, int w, int h)
 {
 	uint8_t *new_image = realloc(q->image, w * h);
+	int *new_region_info = realloc(q->region_info, w * h * sizeof(int));
 
-	if (!new_image)
+	if (!new_image || !new_region_info) {
+		free(new_image);
+		free(new_region_info);
 		return -1;
+	}
 
 	q->image = new_image;
+	q->region_info = new_region_info;
 	q->w = w;
 	q->h = h;
 
