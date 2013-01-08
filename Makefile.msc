@@ -14,7 +14,7 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 # update to the path of your local libjpeg source
-LIBJPEG_ROOT=c:\develop\screensharing\jpeg-6b
+LIBJPEG_ROOT=c:\develop\jpeg-6b
 
 CP=@copy /y
 MKDIR=@mkdir
