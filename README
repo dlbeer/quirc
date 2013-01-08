@@ -77,6 +77,11 @@ want, or are unable to build everything:
   * quirc-scanner
   * quirc-demo
 
+To compile on Windows using Visual Studio, edit ``Makefile.msc`` and
+adjust the path to the (compiled) libjpeg source folder. Type
+``nmake -f Makefile.msc`` to build the library.
+
+
 Library use
 -----------
 

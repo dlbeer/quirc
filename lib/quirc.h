@@ -17,7 +17,16 @@
 #ifndef QUIRC_H_
 #define QUIRC_H_
 
+#if !defined(_WIN32) || defined(__MINGW32__)
 #include <stdint.h>
+#else
+#if !defined(uint8_t)
+typedef unsigned __int8 uint8_t;
+#endif
+#if !defined(uint16_t)
+typedef unsigned __int16 uint16_t;
+#endif
+#endif
 
 struct quirc;
 

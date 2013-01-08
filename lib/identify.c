@@ -19,6 +19,13 @@
 #include <math.h>
 #include "quirc_internal.h"
 
+#if defined(_WIN32) && !defined(__MINGW32__)
+static double rint(double x)
+{
+	return floor(x+.5);
+}
+#endif
+
 /************************************************************************
  * Linear algebra routines
  */
@@ -184,11 +191,18 @@ static void threshold(struct quirc *q)
 	int avg_u = 0;
 	int threshold_s = q->w / THRESHOLD_S_DEN;
 	uint8_t *row = q->image;
+#if !defined(_WIN32) || defined(__MINGW32__)
+	int row_average[q->w];
+#else
+	int *row_average = (int *) malloc(q->w * sizeof(int));
+#endif
 
 	for (y = 0; y < q->h; y++) {
-		int row_average[q->w];
-
+#if !defined(_WIN32) || defined(__MINGW32__)
 		memset(row_average, 0, sizeof(row_average));
+#else
+		memset(row_average, 0, q->w * sizeof(int));
+#endif
 
 		for (x = 0; x < q->w; x++) {
 			int w, u;
@@ -220,6 +234,9 @@ static void threshold(struct quirc *q)
 
 		row += q->w;
 	}
+#if !defined(_WIN32) || defined(__MINGW32__)
+	free(row_average);
+#endif
 }
 
 static void area_count(void *user_data, int y, int left, int right)

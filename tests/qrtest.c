@@ -17,10 +17,18 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#if !defined(_WIN32) || defined(__MINGW32__)
 #include <unistd.h>
+#include <dirent.h>
+#else
+#include <windows.h>
+#define lstat stat
+#define snprintf _snprintf
+#define S_ISREG(mode) ((mode) & S_IFREG)
+#define S_ISDIR(mode) ((mode) & S_IFDIR)
+#endif
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <dirent.h>
 #include <ctype.h>
 #include <quirc.h>
 #include <jpeglib.h>
@@ -164,9 +172,10 @@ static int test_scan(const char *path, struct result_info *info);
 static int scan_dir(const char *path, const char *filename,
 		    struct result_info *info)
 {
+	int count = 0;
+#if !defined(_WIN32) || defined(__MINGW32__)
 	DIR *d = opendir(path);
 	struct dirent *ent;
-	int count = 0;
 
 	if (!d) {
 		fprintf(stderr, "%s: opendir: %s\n", path, strerror(errno));
@@ -190,6 +199,34 @@ static int scan_dir(const char *path, const char *filename,
 	}
 
 	closedir(d);
+#else
+	WIN32_FIND_DATA ent;
+	char fullpath[1024];
+	HANDLE d;
+	snprintf(fullpath, sizeof(fullpath), "%s/%s",
+		 path, "*.*");
+	d = FindFirstFile(fullpath, &ent);
+	if (d == INVALID_HANDLE_VALUE) {
+		fprintf(stderr, "%s: FindFirstFile: %s\n", path, strerror(errno));
+		return -1;
+    }
+    
+	printf("%s:\n", path);
+
+	do {
+		if (ent.cFileName[0] != '.') {
+			struct result_info sub;
+
+			snprintf(fullpath, sizeof(fullpath), "%s/%s",
+				 path, ent.cFileName);
+			if (test_scan(fullpath, &sub) > 0) {
+				add_result(info, &sub);
+				count++;
+			}
+		}
+	} while (FindNextFile(d, &ent) != 0);
+	FindClose(d);
+#endif
 
 	if (count > 1) {
 		print_result(filename, info);
@@ -262,13 +299,16 @@ static int run_tests(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
+#if !defined(_WIN32) || defined(__MINGW32__)
 	int opt;
+#endif
 
 	printf("quirc test program\n");
 	printf("Copyright (C) 2010-2012 Daniel Beer <dlbeer@gmail.com>\n");
 	printf("Library version: %s\n", quirc_version());
 	printf("\n");
 
+#if !defined(_WIN32) || defined(__MINGW32__)
 	while ((opt = getopt(argc, argv, "vd")) >= 0)
 		switch (opt) {
 		case 'v':
@@ -285,6 +325,7 @@ int main(int argc, char **argv)
 
 	argv += optind;
 	argc -= optind;
+#endif
 
 	return run_tests(argc, argv);;
 }

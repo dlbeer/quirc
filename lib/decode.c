@@ -19,6 +19,10 @@
 #include <string.h>
 #include <stdlib.h>
 
+#if defined(_WIN32) && !defined(__WINGW32__)
+#define inline __inline
+#endif
+
 #define MAX_POLY       64
 
 /************************************************************************
@@ -42,9 +46,15 @@ static const uint8_t gf16_log[16] = {
 };
 
 static const struct galois_field gf16 = {
+#if !defined(_WIN32) || defined(__MINGW32__)
 	.p = 15,
 	.log = gf16_log,
 	.exp = gf16_exp
+#else
+	15,
+	gf16_log,
+	gf16_exp
+#endif
 };
 
 static const uint8_t gf256_exp[256] = {
@@ -118,9 +128,15 @@ static const uint8_t gf256_log[256] = {
 };
 
 const static struct galois_field gf256 = {
+#if !defined(_WIN32) || defined(__MINGW32__)
 	.p = 255,
 	.log = gf256_log,
 	.exp = gf256_exp
+#else
+	255,
+	gf256_log,
+	gf256_exp
+#endif
 };
 
 /************************************************************************

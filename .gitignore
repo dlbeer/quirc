@@ -8,3 +8,8 @@ libquirc.a
 libquirc.so
 .*.swp
 *~
+*.obj
+*.exe
+libquirc.lib
+*.idb
+*.pdb
