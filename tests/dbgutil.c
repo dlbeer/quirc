@@ -16,6 +16,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <setjmp.h>
 #include <jpeglib.h>
 #include "dbgutil.h"
@@ -91,7 +92,9 @@ int load_jpeg(struct quirc *q, const char *filename)
 	FILE *infile = fopen(filename, "rb");
 	struct jpeg_decompress_struct dinfo;
 	struct my_jpeg_error err;
-	uint8_t *image;
+	quirc_pixel_t *image;
+	JSAMPROW row_pointer;
+	int x;
 	int y;
 
 	if (!infile) {
@@ -124,12 +127,18 @@ int load_jpeg(struct quirc *q, const char *filename)
 
 	image = quirc_begin(q, NULL, NULL);
 
-	for (y = 0; y < dinfo.output_height; y++) {
-		JSAMPROW row_pointer = image + y * dinfo.output_width;
+	row_pointer = malloc(dinfo.output_width);
+	if (!row_pointer)
+		goto fail;
 
+	for (y = 0; y < dinfo.output_height; y++) {
 		jpeg_read_scanlines(&dinfo, &row_pointer, 1);
+		for (x=0; x < dinfo.output_width; x++, image++) {
+			*image = *(row_pointer + x);
+		}
 	}
 
+	free(row_pointer);
 	fclose(infile);
 	jpeg_finish_decompress(&dinfo);
 	jpeg_destroy_decompress(&dinfo);

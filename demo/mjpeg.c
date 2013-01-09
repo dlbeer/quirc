@@ -15,6 +15,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <setjmp.h>
 #include <jpeglib.h>
@@ -247,8 +248,10 @@ int mjpeg_decode_rgb32(struct mjpeg_decoder *mj,
 
 int mjpeg_decode_gray(struct mjpeg_decoder *mj,
 		      const uint8_t *data, int datalen,
-		      uint8_t *out, int pitch, int max_w, int max_h)
+		      quirc_pixel_t *out, int pitch, int max_w, int max_h)
 {
+	int x;
+	JSAMPROW row_pointer;
 	if (setjmp(mj->env))
 		return -1;
 
@@ -266,12 +269,20 @@ int mjpeg_decode_gray(struct mjpeg_decoder *mj,
 		return -1;
 	}
 
-	while (mj->dinfo.output_scanline < mj->dinfo.image_height) {
-		uint8_t *scr = out + pitch * mj->dinfo.output_scanline;
+	row_pointer = malloc(mj->dinfo.output_width);
+	if (!row_pointer)
+		return -1;
 
-		jpeg_read_scanlines(&mj->dinfo, &scr, 1);
+	while (mj->dinfo.output_scanline < mj->dinfo.image_height) {
+		quirc_pixel_t *scr = out + pitch * mj->dinfo.output_scanline;
+
+		jpeg_read_scanlines(&mj->dinfo, &row_pointer, 1);
+		for (x=0; x < mj->dinfo.output_width; x++, scr++) {
+			*scr = *(row_pointer + x);
+		}
 	}
 
+	free(row_pointer);
 	jpeg_finish_decompress(&mj->dinfo);
 
 	return 0;

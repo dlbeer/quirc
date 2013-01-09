@@ -61,14 +61,14 @@ void yuyv_to_rgb32(const uint8_t *src, int src_pitch,
 
 void yuyv_to_luma(const uint8_t *src, int src_pitch,
 		  int w, int h,
-		  uint8_t *dst, int dst_pitch)
+		  quirc_pixel_t *dst, int dst_pitch)
 {
 	int y;
 
 	for (y = 0; y < h; y++) {
 		int x;
 		const uint8_t *srow = src + y * src_pitch;
-		uint8_t *drow = dst + y * dst_pitch;
+		quirc_pixel_t *drow = dst + y * dst_pitch;
 
 		for (x = 0; x < w; x += 2) {
 			*(drow++) = srow[0];
@@ -80,13 +80,13 @@ void yuyv_to_luma(const uint8_t *src, int src_pitch,
 
 void rgb32_to_luma(const uint8_t *src, int src_pitch,
 		   int w, int h,
-		   uint8_t *dst, int dst_pitch)
+		   quirc_pixel_t *dst, int dst_pitch)
 {
 	int y;
 
 	for (y = 0; y < h; y++) {
 		const uint8_t *rgb32 = src + src_pitch * y;
-		uint8_t *gray = dst + y * dst_pitch;
+		quirc_pixel_t *gray = dst + y * dst_pitch;
 		int i;
 
 		for (i = 0; i < w; i++) {

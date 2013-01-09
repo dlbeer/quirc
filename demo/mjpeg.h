@@ -22,6 +22,8 @@
 #include <jpeglib.h>
 #include <setjmp.h>
 
+#include <quirc.h>
+
 struct mjpeg_decoder {
 	/* The error manager must be the first item in this struct */
 	struct jpeg_error_mgr			err;
@@ -49,6 +51,6 @@ int mjpeg_decode_rgb32(struct mjpeg_decoder *mj,
  */
 int mjpeg_decode_gray(struct mjpeg_decoder *mj,
 		      const uint8_t *data, int datalen,
-		      uint8_t *out, int pitch, int max_w, int max_h);
+		      quirc_pixel_t *out, int pitch, int max_w, int max_h);
 
 #endif
