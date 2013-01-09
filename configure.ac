@@ -19,16 +19,30 @@ AC_PROG_LN_S
 
 AC_HEADER_STDC
 
-PKG_CHECK_MODULES(sdl, sdl)
-AC_SUBST(sdl_CFLAGS)
-AC_SUBST(sdl_LIBS)
+AC_ARG_ENABLE([quirc-examples],
+    AS_HELP_STRING([--disable-quirc-examples  disable compilation of examples]),
+    [], [enable_compile_examples=yes])
 
-AC_CHECK_HEADERS(setjmp.h jpeglib.h)
-AC_CHECK_HEADERS(linux/videodev2.h linux/videodev.h)
+AC_MSG_CHECKING(whether to disable building of examples)
+if test "$enable_compile_examples" = "yes"; then
+  AC_MSG_RESULT(no)
+
+  PKG_CHECK_MODULES(sdl, sdl)
+  AC_SUBST(sdl_CFLAGS)
+  AC_SUBST(sdl_LIBS)
+
+  AC_CHECK_HEADERS(setjmp.h jpeglib.h)
+  AC_CHECK_HEADERS(linux/videodev2.h linux/videodev.h)
+else
+  AC_MSG_RESULT(yes)
+fi
+
+AM_CONDITIONAL([COMPILE_EXAMPLES], [test "$enable_compile_examples" = "yes"])
+
 AC_SEARCH_LIBS([rint], [m])
 
-AC_ARG_ENABLE(large-images,
-    [  --enable-large-images   enable decoding of large images],
+AC_ARG_ENABLE([large-images],
+    AS_HELP_STRING([--enable-large-images  enable decoding of large images]),
     [large_images=true],
     [large_images=false])
 

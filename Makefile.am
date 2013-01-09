@@ -20,10 +20,14 @@ libquirc_la_SOURCES = lib/decode.c \
 libquirc_la_LIBADD = $(SYS_LIBS)
 libquirc_la_LDFLAGS = -version-info $(VERSION_INFO)
 
-bin_PROGRAMS = quirc-demo \
-	quirc-scanner
+bin_PROGRAMS =
+noinst_PROGRAMS =
 
-noinst_PROGRAMS = qrtest \
+if COMPILE_EXAMPLES
+
+bin_PROGRAMS += quirc-demo \
+	quirc-scanner
+noinst_PROGRAMS += qrtest \
 	inspect
 
 DEMO_SOURCES = \
@@ -46,6 +50,8 @@ quirc_demo_LDADD = libquirc.la -ljpeg $(sdl_LIBS) -lSDL_gfx
 
 quirc_scanner_SOURCES = $(DEMO_SOURCES) tests/dbgutil.c demo/scanner.c
 quirc_scanner_LDADD = libquirc.la -ljpeg
+
+endif
 
 AM_CPPFLAGS = -I$(srcdir)/lib $(SYS_INCLUDES)
 
