@@ -34,18 +34,18 @@ DEMO_SOURCES = \
     demo/demoutil.c
 
 qrtest_SOURCES = tests/dbgutil.c tests/qrtest.c
-qrtest_LDADD = libquirc.a -ljpeg
+qrtest_LDADD = libquirc.la -ljpeg
 
 inspect_SOURCES = tests/dbgutil.c tests/inspect.c
 inspect_CFLAGS = $(sdl_CFLAGS)
-inspect_LDADD = libquirc.a -ljpeg $(sdl_LIBS) -lSDL_gfx
+inspect_LDADD = libquirc.la -ljpeg $(sdl_LIBS) -lSDL_gfx
 
 quirc_demo_SOURCES = $(DEMO_SOURCES) tests/dbgutil.c demo/demo.c
 quirc_demo_CFLAGS = $(sdl_CFLAGS)
-quirc_demo_LDADD = libquirc.a -ljpeg $(sdl_LIBS) -lSDL_gfx
+quirc_demo_LDADD = libquirc.la -ljpeg $(sdl_LIBS) -lSDL_gfx
 
 quirc_scanner_SOURCES = $(DEMO_SOURCES) tests/dbgutil.c demo/scanner.c
-quirc_scanner_LDADD = libquirc.a -ljpeg
+quirc_scanner_LDADD = libquirc.la -ljpeg
 
 AM_CPPFLAGS = -I$(srcdir)/lib $(SYS_INCLUDES)
 
