@@ -19,6 +19,14 @@
 
 #include <stdint.h>
 
+#include <quirc-config.h>
+
+#ifdef QUIRC__DECODE_LARGE_IMAGES
+typedef uint16_t quirc_pixel_t;
+#else
+typedef uint8_t quirc_pixel_t;
+#endif
+
 struct quirc;
 
 /* Obtain the library version string. */
@@ -42,14 +50,15 @@ int quirc_resize(struct quirc *q, int w, int h);
 
 /* These functions are used to process images for QR-code recognition.
  * quirc_begin() must first be called to obtain access to a buffer into
- * which the input image should be placed. Optionally, the current
- * width and height may be returned.
+ * which the input image should be placed. Values between 0x00 and 0xff
+ * must be used to store the grayscale level.
+ * Optionally, the current width and height may be returned.
  *
  * After filling the buffer, quirc_end() should be called to process
  * the image for QR-code recognition. The locations and content of each
  * code may be obtained using accessor functions described below.
  */
-uint8_t *quirc_begin(struct quirc *q, int *w, int *h);
+quirc_pixel_t *quirc_begin(struct quirc *q, int *w, int *h);
 void quirc_end(struct quirc *q);
 
 /* This structure describes a location in the input image buffer. */

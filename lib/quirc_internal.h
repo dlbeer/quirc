@@ -18,12 +18,17 @@
 #define QUIRC_INTERNAL_H_
 
 #include "quirc.h"
+#include "quirc-config.h"
 
 #define QUIRC_PIXEL_WHITE	0
 #define QUIRC_PIXEL_BLACK	1
 #define QUIRC_PIXEL_REGION	2
 
-#define QUIRC_MAX_REGIONS	2048
+#ifdef QUIRC__DECODE_LARGE_IMAGES
+#define QUIRC_MAX_REGIONS	65534
+#else
+#define QUIRC_MAX_REGIONS	254
+#endif
 #define QUIRC_MAX_CAPSTONES	32
 #define QUIRC_MAX_GRIDS		8
 
@@ -65,8 +70,7 @@ struct quirc_grid {
 };
 
 struct quirc {
-	uint8_t			*image;
-	int			*region_info;
+	quirc_pixel_t		*image;
 	int			w;
 	int			h;
 
