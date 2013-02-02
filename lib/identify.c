@@ -1011,7 +1011,7 @@ static void test_neighbours(struct quirc *q, int i,
 			}
 		}
 
-	if (best_h < 0)
+	if (best_h < 0 || best_v < 0)
 		return;
 
 	record_qr_grid(q, best_h, i, best_v);
