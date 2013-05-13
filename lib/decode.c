@@ -609,7 +609,7 @@ static quirc_decode_error_t codestream_ecc(struct quirc_data *data,
 	return QUIRC_SUCCESS;
 }
 
-static int get_bits(uint8_t *data, int pos, int len)
+static int get_bits(const uint8_t *data, int pos, int len)
 {
 	int ret = 0;
 
@@ -627,13 +627,33 @@ static int get_bits(uint8_t *data, int pos, int len)
 	return ret;
 }
 
+static int numeric_tuple(struct quirc_data *data,
+			 const struct datastream *ds,
+			 int *ptr, int bits, int digits)
+{
+	int tuple;
+	int i;
+
+	if (*ptr + bits > ds->data_bits)
+		return -1;
+
+	tuple = get_bits(ds->data, *ptr, bits);
+	*ptr += bits;
+
+	for (i = 0; i < digits; i++) {
+		data->payload[data->payload_len++] = tuple % 10 + '0';
+		tuple /= 10;
+	}
+
+	return 0;
+}
+
 static quirc_decode_error_t decode_numeric(struct quirc_data *data,
 					   struct datastream *ds)
 {
 	int bits = 14;
 	int count;
-	int tuples;
-	int i;
+	int ptr;
 
 	if (data->version < 10)
 		bits = 10;
@@ -644,27 +664,49 @@ static quirc_decode_error_t decode_numeric(struct quirc_data *data,
 	if (count + 1 > QUIRC_MAX_PAYLOAD)
 		return QUIRC_ERROR_DATA_OVERFLOW;
 
-	tuples = (count + 2) / 3;
-	if (tuples * 10 + bits + 4 > ds->data_bits)
+	data->payload_len = 0;
+	ptr = bits + 4;
+
+	while (data->payload_len + 2 < count)
+		if (numeric_tuple(data, ds, &ptr, 10, 3) < 0)
+			return QUIRC_ERROR_DATA_UNDERFLOW;
+
+	if ((data->payload_len + 1 < count) &&
+	    (numeric_tuple(data, ds, &ptr, 7, 2) < 0))
 		return QUIRC_ERROR_DATA_UNDERFLOW;
 
-	for (i = 0; i < tuples; i++) {
-		int d = get_bits(ds->data, i * 10 + bits + 4, 10);
-		int p = i * 3 + 2;
-		int j;
-
-		for (j = 0; j < 3; j++) {
-			if (p < count)
-				data->payload[p] = d % 10 + '0';
-			d /= 10;
-			p--;
-		}
-	}
+	if ((data->payload_len < count) &&
+	    (numeric_tuple(data, ds, &ptr, 4, 1) < 0))
+		return QUIRC_ERROR_DATA_UNDERFLOW;
 
 	data->payload[count] = 0;
-	data->payload_len = count;
-
 	return QUIRC_SUCCESS;
+}
+
+static int alpha_tuple(struct quirc_data *data,
+		       const struct datastream *ds,
+		       int *ptr, int bits, int digits)
+{
+	int tuple;
+	int i;
+
+	if (*ptr + bits > ds->data_bits)
+		return -1;
+
+	tuple = get_bits(ds->data, *ptr, bits);
+	*ptr += bits;
+
+	for (i = 0; i < digits; i++) {
+		static const char *alpha_map =
+			"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:";
+
+		data->payload[data->payload_len + digits - i - 1] =
+			alpha_map[tuple % 45];
+		tuple /= 45;
+	}
+
+	data->payload_len += digits;
+	return 0;
 }
 
 static quirc_decode_error_t decode_alpha(struct quirc_data *data,
@@ -672,8 +714,7 @@ static quirc_decode_error_t decode_alpha(struct quirc_data *data,
 {
 	int bits = 13;
 	int count;
-	int tuples;
-	int i;
+	int ptr;
 
 	if (data->version < 7)
 		bits = 9;
@@ -684,24 +725,18 @@ static quirc_decode_error_t decode_alpha(struct quirc_data *data,
 	if (count + 1 > QUIRC_MAX_PAYLOAD)
 		return QUIRC_ERROR_DATA_OVERFLOW;
 
-	tuples = (count + 1) / 2;
-	if (tuples * 11 + bits + 4 > ds->data_bits)
+	data->payload_len = 0;
+	ptr = bits + 4;
+
+	while (data->payload_len + 1 < count)
+		if (alpha_tuple(data, ds, &ptr, 11, 2) < 0)
+			return QUIRC_ERROR_DATA_UNDERFLOW;
+
+	if ((data->payload_len < count) &&
+	    (alpha_tuple(data, ds, &ptr, 6, 1) < 0))
 		return QUIRC_ERROR_DATA_UNDERFLOW;
 
-	for (i = 0; i < tuples; i++) {
-		static const char *alpha_map =
-			"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:";
-		int d = get_bits(ds->data, i * 11 + bits + 4, 11);
-		int p = i * 2;
-
-		if (p + 1 < count)
-			data->payload[p + 1] = alpha_map[d % 45];
-		data->payload[p] = alpha_map[(d / 45) % 45];
-	}
-
 	data->payload[count] = 0;
-	data->payload_len = count;
-
 	return QUIRC_SUCCESS;
 }
 
