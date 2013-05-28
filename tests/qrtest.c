@@ -92,8 +92,7 @@ static int scan_file(const char *path, const char *filename,
 	while (len >= 0 && filename[len] != '.')
 		len--;
 	ext = filename + len + 1;
-	if (!(toupper(ext[0] == 'j') && toupper(ext[1] == 'p') &&
-	      (toupper(ext[2] == 'e') || toupper(ext[2] == 'g'))))
+	if (!(strcasecmp(ext, "jpg") || strcasecmp(ext, "jpeg")))
 		return 0;
 
 	total_start = start = clock();
