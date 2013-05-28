@@ -116,6 +116,10 @@ struct quirc_data {
 	int			version;
 	int			ecc_level;
 	int			mask;
+
+	/* This field is the highest-valued data type found in the QR
+	 * code.
+	 */
 	int			data_type;
 
 	/* Data payload. For the Kanji datatype, payload is encoded as
