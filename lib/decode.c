@@ -640,11 +640,12 @@ static int numeric_tuple(struct quirc_data *data,
 	tuple = get_bits(ds->data, *ptr, bits);
 	*ptr += bits;
 
-	for (i = 0; i < digits; i++) {
-		data->payload[data->payload_len++] = tuple % 10 + '0';
+	for (i = digits - 1; i >= 0; i--) {
+		data->payload[data->payload_len + i] = tuple % 10 + '0';
 		tuple /= 10;
 	}
 
+	data->payload_len += digits;
 	return 0;
 }
 
