@@ -132,7 +132,7 @@ static void flood_fill_seed(struct quirc *q, int x, int y, int from, int to,
 	int left = x;
 	int right = x;
 	int i;
-	uint8_t *row = q->image + y * q->w;
+	quirc_pixel_t *row = q->image + y * q->w;
 
 	if (depth >= FLOOD_FILL_MAX_DEPTH)
 		return;
@@ -183,7 +183,7 @@ static void threshold(struct quirc *q)
 	int avg_w = 0;
 	int avg_u = 0;
 	int threshold_s = q->w / THRESHOLD_S_DEN;
-	uint8_t *row = q->image;
+	quirc_pixel_t *row = q->image;
 
 	for (y = 0; y < q->h; y++) {
 		int row_average[q->w];
@@ -229,7 +229,7 @@ static void area_count(void *user_data, int y, int left, int right)
 
 static int region_code(struct quirc *q, int x, int y)
 {
-	int pixel;
+	quirc_pixel_t pixel;
 	struct quirc_region *box;
 	int region;
 
@@ -415,7 +415,7 @@ static void test_capstone(struct quirc *q, int x, int y, int *pb)
 
 static void finder_scan(struct quirc *q, int y)
 {
-	uint8_t *row = q->image + y * q->w;
+	quirc_pixel_t *row = q->image + y * q->w;
 	int x;
 	int last_color;
 	int run_length = 0;
@@ -587,7 +587,7 @@ static int timing_scan(const struct quirc *q,
 	x = p0->x;
 	y = p0->y;
 	for (i = 0; i <= d; i++) {
-		int pixel;
+		quirc_pixel_t pixel;
 
 		if (y < 0 || y >= q->h || x < 0 || x >= q->w)
 			break;
@@ -1066,7 +1066,7 @@ static void test_grouping(struct quirc *q, int i)
 	test_neighbours(q, i, &hlist, &vlist);
 }
 
-uint8_t *quirc_begin(struct quirc *q, int *w, int *h)
+quirc_pixel_t *quirc_begin(struct quirc *q, int *w, int *h)
 {
 	q->num_regions = QUIRC_PIXEL_REGION;
 	q->num_capstones = 0;

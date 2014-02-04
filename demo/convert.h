@@ -19,6 +19,8 @@
 
 #include <stdint.h>
 
+#include <quirc.h>
+
 /* Convert 4:2:2 YUYV format to RGB32 format. The source and destination
  * frames are expected to be the same size.
  */
@@ -29,11 +31,11 @@ void yuyv_to_rgb32(const uint8_t *src, int src_pitch,
 /* Extract the luma channel from a 4:2:2 YUYV image. */
 void yuyv_to_luma(const uint8_t *src, int src_pitch,
 		  int w, int h,
-		  uint8_t *dst, int dst_pitch);
+		  quirc_pixel_t *dst, int dst_pitch);
 
 /* Extract the luma channel from an RGB32 image. */
 void rgb32_to_luma(const uint8_t *src, int src_pitch,
 		   int w, int h,
-		   uint8_t *dst, int dst_pitch);
+		   quirc_pixel_t *dst, int dst_pitch);
 
 #endif

@@ -8,3 +8,13 @@ libquirc.a
 libquirc.so
 .*.swp
 *~
+.libs
+.deps
+.dirstamp
+Makefile
+Makefile.in
+*.m4
+*.la
+quirc-config.h
+config.h
+configure

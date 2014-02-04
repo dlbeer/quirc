@@ -14,6 +14,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
@@ -21,7 +25,11 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/ioctl.h>
+#ifdef HAVE_LINUX_VIDEODEV2_H
+#include <linux/videodev2.h>
+#else
 #include <linux/videodev.h>
+#endif
 
 #include "camera.h"
 

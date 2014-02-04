@@ -45,7 +45,7 @@ static int main_loop(struct camera *cam,
 	for (;;) {
 		int w, h;
 		int i, count;
-		uint8_t *buf = quirc_begin(q, &w, &h);
+		quirc_pixel_t *buf = quirc_begin(q, &w, &h);
 
 		if (camera_update(cam) < 0)
 			return -1;
