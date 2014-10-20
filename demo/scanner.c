@@ -32,7 +32,6 @@ static const char *camera_path = "/dev/video0";
 static int video_width = 640;
 static int video_height = 480;
 static int want_verbose = 0;
-static int gain_request = -1;
 static int printer_timeout = 2;
 
 static int main_loop(struct camera *cam,
@@ -46,19 +45,34 @@ static int main_loop(struct camera *cam,
 		int w, h;
 		int i, count;
 		uint8_t *buf = quirc_begin(q, &w, &h);
+		const struct camera_buffer *head;
+		const struct camera_parms *parms = camera_get_parms(cam);
 
-		if (camera_update(cam) < 0)
+		if (camera_dequeue_one(cam) < 0) {
+			perror("camera_dequeue_one");
 			return -1;
+		}
 
-		switch (cam->format) {
+		head = camera_get_head(cam);
+
+		switch (parms->format) {
 		case CAMERA_FORMAT_MJPEG:
-			mjpeg_decode_gray(mj, cam->mem, cam->mem_len,
+			mjpeg_decode_gray(mj, head->addr, head->size,
 					  buf, w, w, h);
 			break;
 
 		case CAMERA_FORMAT_YUYV:
-			yuyv_to_luma(cam->mem, w * 2, w, h, buf, w);
+			yuyv_to_luma(head->addr, w * 2, w, h, buf, w);
 			break;
+
+		default:
+			fprintf(stderr, "Unknown frame format\n");
+			return -1;
+		}
+
+		if (camera_enqueue_all(cam) < 0) {
+			perror("camera_enqueue_all");
+			return -1;
 		}
 
 		quirc_end(q);
@@ -80,12 +94,31 @@ static int run_scanner(void)
 	struct quirc *qr;
 	struct camera cam;
 	struct mjpeg_decoder mj;
-	int ret;
+	const struct camera_parms *parms;
 
-	if (camera_init(&cam, camera_path, video_width, video_height) < 0)
-		return -1;
+	camera_init(&cam);
+	if (camera_open(&cam, camera_path, video_width, video_height,
+			25, 1) < 0) {
+		perror("camera_open");
+		goto fail_qr;
+	}
 
-	camera_set_gain(&cam, gain_request);
+	if (camera_map(&cam, 8) < 0) {
+		perror("camera_map");
+		goto fail_qr;
+	}
+
+	if (camera_on(&cam) < 0) {
+		perror("camera_on");
+		goto fail_qr;
+	}
+
+	if (camera_enqueue_all(&cam) < 0) {
+		perror("camera_enqueue_all");
+		goto fail_qr;
+	}
+
+	parms = camera_get_parms(&cam);
 
 	qr = quirc_new();
 	if (!qr) {
@@ -93,26 +126,29 @@ static int run_scanner(void)
 		goto fail_qr;
 	}
 
-	if (quirc_resize(qr, cam.width, cam.height) < 0) {
+	if (quirc_resize(qr, parms->width, parms->height) < 0) {
 		perror("couldn't allocate QR buffer");
 		goto fail_qr_resize;
 	}
 
 	mjpeg_init(&mj);
-	ret = main_loop(&cam, qr, &mj);
+	if (main_loop(&cam, qr, &mj) < 0)
+		goto fail_main_loop;
 	mjpeg_free(&mj);
 
 	quirc_destroy(qr);
-	camera_free(&cam);
+	camera_destroy(&cam);
 
 	return 0;
 
+fail_main_loop:
+	mjpeg_free(&mj);
 fail_qr_resize:
 	quirc_destroy(qr);
 fail_qr:
-	camera_free(&cam);
+	camera_destroy(&cam);
 
-	return 0;
+	return -1;
 }
 
 static void usage(const char *progname)
@@ -122,7 +158,6 @@ static void usage(const char *progname)
 "    -v             Show extra data for detected codes.\n"
 "    -d <device>    Specify camera device path.\n"
 "    -s <WxH>       Specify video dimensions.\n"
-"    -g <value>     Set camera gain.\n"
 "    -p <timeout>   Set printer timeout (seconds).\n"
 "    --help         Show this information.\n"
 "    --version      Show library version information.\n",
@@ -168,10 +203,6 @@ int main(int argc, char **argv)
 
 		case 'd':
 			camera_path = optarg;
-			break;
-
-		case 'g':
-			gain_request = atoi(optarg);
 			break;
 
 		case '?':

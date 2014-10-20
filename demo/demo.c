@@ -33,7 +33,6 @@ static int video_width = 640;
 static int video_height = 480;
 static int want_frame_rate = 0;
 static int want_verbose = 0;
-static int gain_request = -1;
 static int printer_timeout = 2;
 
 static void fat_text(SDL_Surface *screen, int x, int y, const char *text)
@@ -122,23 +121,38 @@ static int main_loop(struct camera *cam, SDL_Surface *screen,
 
 	for (;;) {
 		time_t now = time(NULL);
+		const struct camera_buffer *head;
+		const struct camera_parms *parms = camera_get_parms(cam);
 
-		if (camera_update(cam) < 0)
+		if (camera_dequeue_one(cam) < 0) {
+			perror("camera_dequeue_one");
 			return -1;
+		}
+
+		head = camera_get_head(cam);
 
 		SDL_LockSurface(screen);
-		switch (cam->format) {
+		switch (parms->format) {
 		case CAMERA_FORMAT_MJPEG:
-			mjpeg_decode_rgb32(mj, cam->mem, cam->mem_len,
+			mjpeg_decode_rgb32(mj, head->addr, head->size,
 					   screen->pixels, screen->pitch,
 					   screen->w, screen->h);
 			break;
 
 		case CAMERA_FORMAT_YUYV:
-			yuyv_to_rgb32(cam->mem, cam->width * 2,
-				      cam->width, cam->height,
+			yuyv_to_rgb32(head->addr, parms->width * 2,
+				      parms->width, parms->height,
 				      screen->pixels, screen->pitch);
 			break;
+
+		default:
+			fprintf(stderr, "Unknown frame format\n");
+			return -1;
+		}
+
+		if (camera_enqueue_all(cam) < 0) {
+			perror("camera_enqueue_all");
+			return -1;
 		}
 
 		rgb32_to_luma(screen->pixels, screen->pitch,
@@ -177,13 +191,32 @@ static int run_demo(void)
 	struct quirc *qr;
 	struct camera cam;
 	struct mjpeg_decoder mj;
+	const struct camera_parms *parms;
 	SDL_Surface *screen;
-	int ret;
 
-	if (camera_init(&cam, camera_path, video_width, video_height) < 0)
-		return -1;
+	camera_init(&cam);
+	if (camera_open(&cam, camera_path, video_width, video_height,
+			25, 1) < 0) {
+		perror("camera_open");
+		goto fail_qr;
+	}
 
-	camera_set_gain(&cam, gain_request);
+	if (camera_map(&cam, 8) < 0) {
+		perror("camera_map");
+		goto fail_qr;
+	}
+
+	if (camera_on(&cam) < 0) {
+		perror("camera_on");
+		goto fail_qr;
+	}
+
+	if (camera_enqueue_all(&cam) < 0) {
+		perror("camera_enqueue_all");
+		goto fail_qr;
+	}
+
+	parms = camera_get_parms(&cam);
 
 	qr = quirc_new();
 	if (!qr) {
@@ -191,7 +224,7 @@ static int run_demo(void)
 		goto fail_qr;
 	}
 
-	if (quirc_resize(qr, cam.width, cam.height) < 0) {
+	if (quirc_resize(qr, parms->width, parms->height) < 0) {
 		perror("couldn't allocate QR buffer");
 		goto fail_qr_resize;
 	}
@@ -201,7 +234,7 @@ static int run_demo(void)
 		goto fail_sdl_init;
 	}
 
-	screen = SDL_SetVideoMode(cam.width, cam.height, 32,
+	screen = SDL_SetVideoMode(parms->width, parms->height, 32,
 				  SDL_SWSURFACE | SDL_DOUBLEBUF);
 	if (!screen) {
 		perror("couldn't init video mode");
@@ -209,24 +242,27 @@ static int run_demo(void)
 	}
 
 	mjpeg_init(&mj);
-	ret = main_loop(&cam, screen, qr, &mj);
+	if (main_loop(&cam, screen, qr, &mj) < 0)
+		goto fail_main_loop;
 	mjpeg_free(&mj);
 
 	SDL_Quit();
 	quirc_destroy(qr);
-	camera_free(&cam);
+	camera_destroy(&cam);
 
 	return 0;
 
+fail_main_loop:
+	mjpeg_free(&mj);
 fail_video_mode:
 	SDL_Quit();
 fail_qr_resize:
 fail_sdl_init:
 	quirc_destroy(qr);
 fail_qr:
-	camera_free(&cam);
+	camera_destroy(&cam);
 
-	return 0;
+	return -1;
 }
 
 static void usage(const char *progname)
@@ -237,7 +273,6 @@ static void usage(const char *progname)
 "    -v             Show extra data for detected codes.\n"
 "    -d <device>    Specify camera device path.\n"
 "    -s <WxH>       Specify video dimensions.\n"
-"    -g <value>     Set camera gain.\n"
 "    -p <timeout>   Set printer timeout (seconds).\n"
 "    --help         Show this information.\n"
 "    --version      Show library version information.\n",
@@ -254,7 +289,7 @@ int main(int argc, char **argv)
 	int opt;
 
 	printf("quirc demo\n");
-	printf("Copyright (C) 2010-2012 Daniel Beer <dlbeer@gmail.com>\n");
+	printf("Copyright (C) 2010-2014 Daniel Beer <dlbeer@gmail.com>\n");
 	printf("\n");
 
 	while ((opt = getopt_long(argc, argv, "d:s:fvg:p:",
@@ -287,10 +322,6 @@ int main(int argc, char **argv)
 
 		case 'd':
 			camera_path = optarg;
-			break;
-
-		case 'g':
-			gain_request = atoi(optarg);
 			break;
 
 		case '?':

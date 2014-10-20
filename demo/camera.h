@@ -1,5 +1,5 @@
 /* quirc -- QR-code recognition library
- * Copyright (C) 2010-2012 Daniel Beer <dlbeer@gmail.com>
+ * Copyright (C) 2010-2014 Daniel Beer <dlbeer@gmail.com>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,54 +17,88 @@
 #ifndef CAMERA_H_
 #define CAMERA_H_
 
-#include <stdint.h>
+#include <stddef.h>
 
-#define CAMERA_BUFFERS		8
+#define CAMERA_MAX_BUFFERS	32
 
 typedef enum {
+	CAMERA_FORMAT_UNKNOWN = 0,
 	CAMERA_FORMAT_MJPEG,
 	CAMERA_FORMAT_YUYV
 } camera_format_t;
 
-struct camera {
-	/* File descriptor for camera device. */
-	int			fd;
-
-	/* Width, height and frame pixel format. Once initialized,
-	 * these values will not change.
-	 */
+struct camera_parms {
+	camera_format_t		format;
 	int			width;
 	int			height;
-	camera_format_t		format;
-
-	/* Buffer information for the current frame. If mem_index < 0,
-	 * then no frame is currently available.
-	 */
-	uint8_t			*mem;
-	int			mem_len;
-	int			mem_index;
-
-	/* Pointers and sizes of memory-mapped buffers. */
-	uint8_t			*buffer_maps[CAMERA_BUFFERS];
-	int			buffer_lens[CAMERA_BUFFERS];
+	int			pitch_bytes;
+	int			interval_n;
+	int			interval_d;
 };
 
-/* Set up a camera driver. This opens the video device and configures for
- * the given resolution. Streaming is started immediately.
- *
- * Returns 0 on success or -1 if an error occurs.
- */
-int camera_init(struct camera *cam, const char *path, int width, int height);
+struct camera_buffer {
+	void			*addr;
+	size_t			size;
+	unsigned long		offset;
+};
 
-/* Set the gain control for the camera device. */
-int camera_set_gain(struct camera *cam, int gain);
+struct camera {
+	int			fd;
 
-/* Shut down the camera device and free allocated memory. */
-void camera_free(struct camera *cam);
+	struct camera_parms	parms;
 
-/* Retrieve the latest frame from the video queue and fill out the mem and
- * mem_len fields in the camera struct.
- */
-int camera_update(struct camera *cam);
+	struct camera_buffer	buf_desc[CAMERA_MAX_BUFFERS];
+	int			buf_count;
+
+	/* Stream state */
+	int			s_on;
+	int			s_qc;
+	int			s_qhead;
+};
+
+/* Initialize/destroy a camera. No resources are allocated. */
+void camera_init(struct camera *c);
+void camera_destroy(struct camera *c);
+
+/* Open/close the camera device */
+int camera_open(struct camera *c, const char *path,
+		int target_w, int target_h,
+		int tr_n, int tr_d);
+void camera_close(struct camera *c);
+
+static inline int camera_get_fd(const struct camera *c)
+{
+	return c->fd;
+}
+
+static inline const struct camera_parms *camera_get_parms
+	(const struct camera *c)
+{
+	return &c->parms;
+}
+
+/* Map buffers */
+int camera_map(struct camera *c, int buf_count);
+void camera_unmap(struct camera *c);
+
+static inline int camera_get_buf_count(const struct camera *c)
+{
+	return c->buf_count;
+}
+
+/* Switch streaming on/off */
+int camera_on(struct camera *c);
+void camera_off(struct camera *c);
+
+/* Enqueue/dequeue buffers (count = 0 means enqueue all) */
+int camera_enqueue_all(struct camera *c);
+int camera_dequeue_one(struct camera *c);
+
+/* Fetch the oldest dequeued buffer */
+static inline const struct camera_buffer *camera_get_head
+	(const struct camera *c)
+{
+	return &c->buf_desc[(c->s_qhead + c->buf_count - 1) % c->buf_count];
+}
 
 #endif
