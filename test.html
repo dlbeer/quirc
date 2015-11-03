@@ -1,0 +1,78 @@
+<html>
+<body>
+	<script src="quirc.js"></script>
+	<script>
+
+	var last = Date.now();
+	function log() {
+		var now = Date.now();
+		var args = Array.prototype.slice.call(arguments);
+		args.unshift('+' + (now - last) + 'ms');
+		console.log.apply(console, args);
+		last = now;
+	}
+
+	var quirc = {}
+	Object
+		.keys(Module)
+		.filter(function(f) { return f.startsWith('_quirc') })
+		.map(function(f) { return f.substring(7) })
+		.some(function(f) { quirc[f] = Module['_quirc_' + f] });
+
+	var width = 640, height = 480;
+
+	log('quirc', quirc);
+
+	// pointer to quirc structure
+	var qr = quirc.new();
+	log('quirc_new', qr);
+
+	if (!qr) {
+		console.error("Failed to allocate memory");
+	}
+
+	var ret = quirc.resize(qr, width, height)
+	log('quirc_resize', ret)
+	if (ret < 0) {
+		console.error("Failed to allocate video memory");
+	}
+
+	var image = quirc.begin(qr, width, height); // pointer
+	log('quirc_begin', image);
+
+	/* Fill out the image buffer here.
+	 * image is a pointer to a w*h bytes.
+	 * One byte per pixel, w pixels per line, h lines in the buffer.
+	 */
+
+	quirc.end(qr);
+	var num_codes, i;
+
+	/* We've previously fed an image to the decoder via
+	 * quirc_begin/quirc_end.
+	 */
+	num_codes = quirc.count(qr);
+	log('num_codes', num_codes);
+	for (i = 0; i < num_codes; i++) {
+	    // struct quirc_code code;
+	    // struct quirc_data data;
+	    // quirc_decode_error_t err;
+
+	    quirc.extract(qr, i, 0); // code
+
+	    /* Decoding stage */
+	    // err = quirc_decode(&code, &data);
+	    if (err)
+		    console.error("DECODE FAILED: %s\n"); // quirc_strerror(err)
+	    else
+		    console.log("Data: %s\n", data.payload);
+    }
+
+
+
+	log('quirc_destroy', quirc.destroy(qr));
+
+
+	</script>
+</body>
+</html>
