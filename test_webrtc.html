@@ -1,6 +1,8 @@
 <html>
 <body>
 	<script src="quirc.js"></script>
+	<h1>Point some QR code to the camera!</h1>
+	<h3>Found [<span style="font-size: 40px" id="display_data"></span>]</h3>
 	<script>
 
 	var last = Date.now();
@@ -33,7 +35,12 @@
 	function decoded(i, version, ecc_level, mask, data_type, payload, payload_len) {
 		// console.log('decoded', arguments)
 		var buffer = read(payload, payload_len);
-		log("Data:", String.fromCharCode.apply(null, buffer));
+		var str = String.fromCharCode.apply(null, buffer);
+		log("Data:", str);
+
+		if (str) {
+			display_data.innerHTML = str;
+		}
 
 	}
 
@@ -111,10 +118,8 @@
 			ctx.drawImage(video, 0, 0);
 			var imageData = ctx.getImageData(0,0, width, height);
 			data = imageData.data;
-
-
 			gofill();
-		}, 1000)
+		}, 50)
 	}
 	</script>
 </body>
