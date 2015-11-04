@@ -40,7 +40,7 @@ var DEFINES = ' ';
 var FLAGS = '' + OPTIMIZE_FLAGS;
 // FLAGS += ' -Wno-warn-absolute-paths ';
 FLAGS += ' -s TOTAL_MEMORY=' + MEM + ' ';
-FLAGS += ' -s NO_BROWSER=1 '; // for 20k less
+// FLAGS += ' -s NO_BROWSER=1 '; // for 20k less
 // FLAGS += ' --memory-init-file 0 '; // for memless file
 
 

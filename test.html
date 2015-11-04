@@ -3,6 +3,22 @@
 	<script src="quirc.js"></script>
 	<script>
 
+var img = new Image;
+img.src = 'qr.png';
+img.onload = function() {
+
+	var width = this.width, height = this.height;
+
+	var canvas = document.createElement('canvas');
+	canvas.width = width;
+	canvas.height = height;
+	var ctx = canvas.getContext('2d');
+	ctx.drawImage(this, 0, 0);
+	var imageData = ctx.getImageData(0,0, width, height);
+	var data = imageData.data;
+	document.body.appendChild(canvas);
+
+
 	var last = Date.now();
 	function log() {
 		var now = Date.now();
@@ -12,14 +28,17 @@
 		last = now;
 	}
 
+	var read = function(offset, len) {
+		return new Uint8Array(Module.HEAPU8.buffer, offset, len);
+	}
+
+
 	var quirc = {}
 	Object
 		.keys(Module)
 		.filter(function(f) { return f.startsWith('_quirc') })
 		.map(function(f) { return f.substring(7) })
 		.some(function(f) { quirc[f] = Module['_quirc_' + f] });
-
-	var width = 640, height = 480;
 
 	log('quirc', quirc);
 
@@ -37,13 +56,17 @@
 		console.error("Failed to allocate video memory");
 	}
 
-	var image = quirc.begin(qr, width, height); // pointer
+	var image = quirc.begin(qr, 0, 0); // pointer
 	log('quirc_begin', image);
 
 	/* Fill out the image buffer here.
 	 * image is a pointer to a w*h bytes.
 	 * One byte per pixel, w pixels per line, h lines in the buffer.
 	 */
+
+	for (var i=0, j=0; i < data.length; i+=4, j++) {
+		Module.HEAPU8[image + j] = data[i];
+	}
 
 	quirc.end(qr);
 	var num_codes, i;
@@ -54,23 +77,29 @@
 	num_codes = quirc.count(qr);
 	log('num_codes', num_codes);
 	for (i = 0; i < num_codes; i++) {
-	    // struct quirc_code code;
-	    // struct quirc_data data;
-	    // quirc_decode_error_t err;
 
-	    quirc.extract(qr, i, 0); // code
+		quirc.extract(qr, i, image); // code
 
-	    /* Decoding stage */
-	    // err = quirc_decode(&code, &data);
-	    if (err)
-		    console.error("DECODE FAILED: %s\n"); // quirc_strerror(err)
-	    else
-		    console.log("Data: %s\n", data.payload);
-    }
+		/* Decoding stage */
+		err = quirc.decode(image, image + 4096);
+		if (err) {
+			console.error("DECODE FAILED: %d\n", err); // quirc_strerror(err)
+		} else {
+			var version = Module.HEAP32[ (image + 4096) / 4 ];
+			var ecc_level = Module.HEAP32[ (image + 4096 + 1*4) / 4 ];
+			var mask = Module.HEAP32[ (image + 4096 + 2*4) / 4 ];
+			var data_type = Module.HEAP32[ (image + 4096 + 3*4) / 4 ];
+			var payload_len = Module.HEAP32[ (image + 4096 + 4*4 + 8896) / 4 ];
+			var payload = read(image + 4096 + 4*4, payload_len);
 
+			console.log("Version: %d, ECC level: %d, Mask: %d, Data type: %d, Payload length: %d\n", version, ecc_level, mask, data_type, payload_len);
 
+			console.log("Data: %s\n", String.fromCharCode.apply(null, payload));
+		}
+	}
 
 	log('quirc_destroy', quirc.destroy(qr));
+}
 
 
 	</script>
