@@ -58,24 +58,19 @@ extern "C" {
 		}
 	}
 
-
-	int xsetup(int width, int height) {
+	long xsetup(int width, int height) {
 		setup();
 		resize(width, height);
 		fill();
-		EM_ASM_({
-			setuped($0)
-		},
-			image
-		);
 
-		return (int)&image;
+		// return pointer to image
+		return (long)image;
 	}
 
-	int xprocess() {
+	long xprocess() {
 		filled();
 		process();
 		fill();
-		return (int)&image;
+		return (long)image;
 	}
 }

@@ -14,13 +14,6 @@ function log() {
 
 var data;
 
-function setuped(pointer) {
-	console.log('setuped')
-	image = pointer
-
-	log('quirc_begin', image);
-	gofill();
-}
 
 function gofill() {
 	/* Fill out the image buffer here.
@@ -59,8 +52,6 @@ img.onload = function() {
 	data = imageData.data;
 	document.body.appendChild(canvas);
 
-
-
 	var read = function(offset, len) {
 		return new Uint8Array(Module.HEAPU8.buffer, offset, len);
 	}
@@ -74,8 +65,8 @@ img.onload = function() {
 	// 	.some(function(f) { quirc[f] = Module['_quirc_' + f] });
 
 	log('quirc', quirc);
-	Module._xsetup(width, height);
-	log('_xsetup');
+	image = Module._xsetup(width, height);
+	log('_xsetup', image, 'pointer');
 
 	setInterval(function() {
 		gofill();
