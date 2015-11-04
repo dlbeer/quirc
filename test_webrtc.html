@@ -1,0 +1,121 @@
+<html>
+<body>
+	<script src="quirc.js"></script>
+	<script>
+
+	var last = Date.now();
+	function log() {
+		var now = Date.now();
+		var args = Array.prototype.slice.call(arguments);
+		args.unshift('+' + (now - last) + 'ms');
+		console.log.apply(console, args);
+		last = now;
+	}
+
+	var data, image;
+
+	function gofill() {
+		/* Fill out the image buffer here.
+		 * image is a pointer to a w*h bytes.
+		 * One byte per pixel, w pixels per line, h lines in the buffer.
+		 */
+		log('gofill')
+		for (var i=0, j=0; i < data.length; i+=4, j++) {
+			Module.HEAPU8[image + j] = data[i];
+		}
+
+		log('writing');
+
+		var a = Module._xprocess();
+		log('quirc_end', a);
+	}
+
+	function decoded(i, version, ecc_level, mask, data_type, payload, payload_len) {
+		// console.log('decoded', arguments)
+		var buffer = read(payload, payload_len);
+		log("Data:", String.fromCharCode.apply(null, buffer));
+
+	}
+
+	function read(offset, len) {
+		return new Uint8Array(Module.HEAPU8.buffer, offset, len);
+	}
+
+	function raw_quirc_apis() {
+		var quirc = {}
+		Object
+			.keys(Module)
+			.filter(function(f) { return f.startsWith('_quirc') })
+			.map(function(f) { return f.substring(7) })
+			.some(function(f) { quirc[f] = Module['_quirc_' + f] });
+		log('quirc', quirc);
+	}
+
+	// start
+	var video = document.createElement('video');
+	document.body.appendChild(video);
+
+	navigator.getUserMedia  = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
+
+	var tw = 1280 / 2;
+	var th = 720 / 2;
+
+	var hdConstraints = {
+		audio: false,
+		video: {
+			mandatory: {
+				maxWidth: tw,
+				maxHeight: th
+			}
+		}
+	};
+
+	if (navigator.getUserMedia) {
+		navigator.getUserMedia(hdConstraints, success, errorCallback);
+	} else {
+		errorCallback('');
+	}
+
+	function errorCallback(e) {
+		console.log("Can't access user media", e);
+	}
+
+	function success(stream) {
+		console.log('success', stream);
+		video.src = window.URL.createObjectURL(stream);
+		video.onclick = function() { video.play(); };
+		video.play();
+
+		var ctx, width, height;
+
+		setInterval(function() {
+			if (!video.videoWidth) return;
+
+			if (!image) {
+				width = video.videoWidth, height = video.videoHeight;
+				log('video', width, height, video);
+
+				var canvas = document.createElement('canvas');
+				canvas.width = width;
+				canvas.height = height;
+
+				ctx = canvas.getContext('2d');
+				document.body.appendChild(canvas);
+
+				log('start');
+				image = Module._xsetup(width, height);
+				log('_xsetup', image, 'pointer');
+				return;
+			}
+
+			ctx.drawImage(video, 0, 0);
+			var imageData = ctx.getImageData(0,0, width, height);
+			data = imageData.data;
+
+
+			gofill();
+		}, 1000)
+	}
+	</script>
+</body>
+</html>
