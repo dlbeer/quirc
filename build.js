@@ -34,17 +34,18 @@ var MAIN_SOURCES = [
 	return SOURCE_PATH + x
 })
 
+MAIN_SOURCES.push('quircjs.cpp');
 
 var DEFINES = ' ';
 
 var FLAGS = '' + OPTIMIZE_FLAGS;
 // FLAGS += ' -Wno-warn-absolute-paths ';
 FLAGS += ' -s TOTAL_MEMORY=' + MEM + ' ';
-// FLAGS += ' -s NO_BROWSER=1 '; // for 20k less
-// FLAGS += ' --memory-init-file 0 '; // for memless file
+FLAGS += ' -s NO_BROWSER=1 '; // for 20k less
+FLAGS += ' --memory-init-file 0 '; // for memless file
 
 
-var funcs = 'quirc_new,quirc_destroy,quirc_resize,quirc_begin,quirc_end,quirc_count,quirc_extract,quirc_decode'
+var funcs = 'xsetup,xprocess'
 var FUNCS = funcs.split(',').map(function(func) { return "'_" + func + "'" }).join(',')
 FLAGS += ' -s EXPORTED_FUNCTIONS="[' + FUNCS + ']" '
 
@@ -52,14 +53,18 @@ FLAGS += ' -s EXPORTED_FUNCTIONS="[' + FUNCS + ']" '
 // FLAGS += ' --bind ';
 
 /* DEBUG FLAGS */
+
 var DEBUG_FLAGS = ' -g ';
 // DEBUG_FLAGS += ' -s ASSERTIONS=2 '
-DEBUG_FLAGS += ' -s ASSERTIONS=1 '
+// DEBUG_FLAGS += ' -s ASSERTIONS=1 '
 // DEBUG_FLAGS += ' --profiling-funcs '
 // DEBUG_FLAGS += ' -s EMTERPRETIFY_ADVISE=1 '
 // DEBUG_FLAGS += ' -s ALLOW_MEMORY_GROWTH=1';
-// DEBUG_FLAGS += '  -s DEMANGLE_SUPPORT=1 ';
+DEBUG_FLAGS += '  -s DEMANGLE_SUPPORT=1 ';
 // DEBUG_FLAGS += ' -s DISABLE_EXCEPTION_CATCHING=0 ';
+
+FLAGS += DEBUG_FLAGS
+
 
 var INCLUDES = [
 	// path.resolve(__dirname, '../../include'),

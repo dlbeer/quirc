@@ -3,6 +3,47 @@
 	<script src="quirc.js"></script>
 	<script>
 
+var last = Date.now();
+function log() {
+	var now = Date.now();
+	var args = Array.prototype.slice.call(arguments);
+	args.unshift('+' + (now - last) + 'ms');
+	console.log.apply(console, args);
+	last = now;
+}
+
+var data;
+
+function setuped(pointer) {
+	console.log('setuped')
+	image = pointer
+
+	log('quirc_begin', image);
+	gofill();
+}
+
+function gofill() {
+	/* Fill out the image buffer here.
+	 * image is a pointer to a w*h bytes.
+	 * One byte per pixel, w pixels per line, h lines in the buffer.
+	 */
+	log('gofill')
+	for (var i=0, j=0; i < data.length; i+=4, j++) {
+		Module.HEAPU8[image + j] = data[i];
+	}
+
+	log('writing');
+
+	var a = Module._xprocess();
+	log('quirc_end', a);
+}
+
+function decoded() {
+	console.log('decoded', arguments)
+}
+
+setTimeout(function() {
+
 var img = new Image;
 img.src = 'qr.png';
 img.onload = function() {
@@ -15,18 +56,10 @@ img.onload = function() {
 	var ctx = canvas.getContext('2d');
 	ctx.drawImage(this, 0, 0);
 	var imageData = ctx.getImageData(0,0, width, height);
-	var data = imageData.data;
+	data = imageData.data;
 	document.body.appendChild(canvas);
 
 
-	var last = Date.now();
-	function log() {
-		var now = Date.now();
-		var args = Array.prototype.slice.call(arguments);
-		args.unshift('+' + (now - last) + 'ms');
-		console.log.apply(console, args);
-		last = now;
-	}
 
 	var read = function(offset, len) {
 		return new Uint8Array(Module.HEAPU8.buffer, offset, len);
@@ -34,73 +67,55 @@ img.onload = function() {
 
 
 	var quirc = {}
-	Object
-		.keys(Module)
-		.filter(function(f) { return f.startsWith('_quirc') })
-		.map(function(f) { return f.substring(7) })
-		.some(function(f) { quirc[f] = Module['_quirc_' + f] });
+	// Object
+	// 	.keys(Module)
+	// 	.filter(function(f) { return f.startsWith('_quirc') })
+	// 	.map(function(f) { return f.substring(7) })
+	// 	.some(function(f) { quirc[f] = Module['_quirc_' + f] });
 
 	log('quirc', quirc);
+	Module._xsetup(width, height);
+	log('_xsetup');
 
-	// pointer to quirc structure
-	var qr = quirc.new();
-	log('quirc_new', qr);
+	setInterval(function() {
+		gofill();
 
-	if (!qr) {
-		console.error("Failed to allocate memory");
-	}
+		return;
 
-	var ret = quirc.resize(qr, width, height)
-	log('quirc_resize', ret)
-	if (ret < 0) {
-		console.error("Failed to allocate video memory");
-	}
+		var num_codes, i;
 
-	var image = quirc.begin(qr, 0, 0); // pointer
-	log('quirc_begin', image);
+		/* We've previously fed an image to the decoder via
+		 * quirc_begin/quirc_end.
+		 */
+		num_codes = quirc.count(qr);
+		log('num_codes', num_codes);
+		for (i = 0; i < num_codes; i++) {
 
-	/* Fill out the image buffer here.
-	 * image is a pointer to a w*h bytes.
-	 * One byte per pixel, w pixels per line, h lines in the buffer.
-	 */
+			quirc.extract(qr, i, image); // code
 
-	for (var i=0, j=0; i < data.length; i+=4, j++) {
-		Module.HEAPU8[image + j] = data[i];
-	}
+			/* Decoding stage */
+			err = quirc.decode(image, image + 4096);
+			if (err) {
+				console.error("DECODE FAILED: %d\n", err); // quirc_strerror(err)
+			} else {
+				var version = Module.HEAP32[ (image + 4096) / 4 ];
+				var ecc_level = Module.HEAP32[ (image + 4096 + 1*4) / 4 ];
+				var mask = Module.HEAP32[ (image + 4096 + 2*4) / 4 ];
+				var data_type = Module.HEAP32[ (image + 4096 + 3*4) / 4 ];
+				var payload_len = Module.HEAP32[ (image + 4096 + 4*4 + 8896) / 4 ];
+				var payload = read(image + 4096 + 4*4, payload_len);
 
-	quirc.end(qr);
-	var num_codes, i;
+				console.log("Version: %d, ECC level: %d, Mask: %d, Data type: %d, Payload length: %d\n", version, ecc_level, mask, data_type, payload_len);
 
-	/* We've previously fed an image to the decoder via
-	 * quirc_begin/quirc_end.
-	 */
-	num_codes = quirc.count(qr);
-	log('num_codes', num_codes);
-	for (i = 0; i < num_codes; i++) {
-
-		quirc.extract(qr, i, image); // code
-
-		/* Decoding stage */
-		err = quirc.decode(image, image + 4096);
-		if (err) {
-			console.error("DECODE FAILED: %d\n", err); // quirc_strerror(err)
-		} else {
-			var version = Module.HEAP32[ (image + 4096) / 4 ];
-			var ecc_level = Module.HEAP32[ (image + 4096 + 1*4) / 4 ];
-			var mask = Module.HEAP32[ (image + 4096 + 2*4) / 4 ];
-			var data_type = Module.HEAP32[ (image + 4096 + 3*4) / 4 ];
-			var payload_len = Module.HEAP32[ (image + 4096 + 4*4 + 8896) / 4 ];
-			var payload = read(image + 4096 + 4*4, payload_len);
-
-			console.log("Version: %d, ECC level: %d, Mask: %d, Data type: %d, Payload length: %d\n", version, ecc_level, mask, data_type, payload_len);
-
-			console.log("Data: %s\n", String.fromCharCode.apply(null, payload));
+				console.log("Data: %s\n", String.fromCharCode.apply(null, payload));
+			}
 		}
-	}
+	}, 1000)
 
-	log('quirc_destroy', quirc.destroy(qr));
+	// log('quirc_destroy', quirc.destroy(qr));
 }
 
+}, 500)
 
 	</script>
 </body>
