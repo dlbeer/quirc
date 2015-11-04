@@ -50,9 +50,24 @@ extern "C" {
 				printf("Data: %s\n", data.payload);
 
 				EM_ASM_({
-					decoded($0, $1)
+					var a = arguments;
+					var $i = 0;
+					decoded(
+						a[$i++],
+						a[$i++],
+						a[$i++],
+						a[$i++],
+						a[$i++],
+						a[$i++],
+						a[$i++]);
 				},
-					i, data.payload
+					i,
+					data.version,
+					data.ecc_level,
+					data.mask,
+					data.data_type,
+					data.payload,
+					data.payload_len
 				);
 			}
 		}

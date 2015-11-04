@@ -12,8 +12,7 @@ function log() {
 	last = now;
 }
 
-var data;
-
+var data, image;
 
 function gofill() {
 	/* Fill out the image buffer here.
@@ -31,8 +30,15 @@ function gofill() {
 	log('quirc_end', a);
 }
 
-function decoded() {
-	console.log('decoded', arguments)
+function decoded(i, version, ecc_level, mask, data_type, payload, payload_len) {
+	// console.log('decoded', arguments)
+	var buffer = read(payload, payload_len);
+	log("Data:", String.fromCharCode.apply(null, buffer));
+
+}
+
+function read(offset, len) {
+	return new Uint8Array(Module.HEAPU8.buffer, offset, len);
 }
 
 setTimeout(function() {
@@ -52,55 +58,20 @@ img.onload = function() {
 	data = imageData.data;
 	document.body.appendChild(canvas);
 
-	var read = function(offset, len) {
-		return new Uint8Array(Module.HEAPU8.buffer, offset, len);
-	}
-
-
-	var quirc = {}
+	// var quirc = {}
 	// Object
 	// 	.keys(Module)
 	// 	.filter(function(f) { return f.startsWith('_quirc') })
 	// 	.map(function(f) { return f.substring(7) })
 	// 	.some(function(f) { quirc[f] = Module['_quirc_' + f] });
+	// log('quirc', quirc);
 
-	log('quirc', quirc);
+	log('start');
 	image = Module._xsetup(width, height);
 	log('_xsetup', image, 'pointer');
 
 	setInterval(function() {
 		gofill();
-
-		return;
-
-		var num_codes, i;
-
-		/* We've previously fed an image to the decoder via
-		 * quirc_begin/quirc_end.
-		 */
-		num_codes = quirc.count(qr);
-		log('num_codes', num_codes);
-		for (i = 0; i < num_codes; i++) {
-
-			quirc.extract(qr, i, image); // code
-
-			/* Decoding stage */
-			err = quirc.decode(image, image + 4096);
-			if (err) {
-				console.error("DECODE FAILED: %d\n", err); // quirc_strerror(err)
-			} else {
-				var version = Module.HEAP32[ (image + 4096) / 4 ];
-				var ecc_level = Module.HEAP32[ (image + 4096 + 1*4) / 4 ];
-				var mask = Module.HEAP32[ (image + 4096 + 2*4) / 4 ];
-				var data_type = Module.HEAP32[ (image + 4096 + 3*4) / 4 ];
-				var payload_len = Module.HEAP32[ (image + 4096 + 4*4 + 8896) / 4 ];
-				var payload = read(image + 4096 + 4*4, payload_len);
-
-				console.log("Version: %d, ECC level: %d, Mask: %d, Data type: %d, Payload length: %d\n", version, ecc_level, mask, data_type, payload_len);
-
-				console.log("Data: %s\n", String.fromCharCode.apply(null, payload));
-			}
-		}
 	}, 1000)
 
 	// log('quirc_destroy', quirc.destroy(qr));
