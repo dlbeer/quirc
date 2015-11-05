@@ -6,7 +6,10 @@
 	<script>
 
 	var last = Date.now();
+	var DEBUG = false;
+
 	function log() {
+		if (!DEBUG) return;
 		var now = Date.now();
 		var args = Array.prototype.slice.call(arguments);
 		args.unshift('+' + (now - last) + 'ms');
@@ -15,6 +18,7 @@
 	}
 
 	var data, image;
+	var ctx, width, height;
 
 	function gofill() {
 		/* Fill out the image buffer here.
@@ -32,7 +36,13 @@
 		log('quirc_end', a);
 	}
 
-	function decoded(i, version, ecc_level, mask, data_type, payload, payload_len) {
+	function counted(n) {
+		log('counted', n);
+	}
+
+	function decoded(i,
+		version, ecc_level, mask, data_type, payload, payload_len,
+		x0, y0, x1, y1, x2, y2, x3, y3) {
 		// console.log('decoded', arguments)
 		var buffer = read(payload, payload_len);
 		var str = String.fromCharCode.apply(null, buffer);
@@ -43,6 +53,22 @@
 			else display_data.innerHTML += ',' + str;
 		}
 
+		ctx.fillStyle = 'red';
+		ctx.strokeStyle = 'red';
+		ctx.beginPath();
+		ctx.moveTo(x0, y0);
+		ctx.lineTo(x1, y1);
+		ctx.lineTo(x2, y2);
+		ctx.lineTo(x3, y3);
+		ctx.closePath();
+		ctx.stroke();
+
+		ctx.save();
+		ctx.translate(width, 0);
+		ctx.scale(-1, 1);
+
+		ctx.fillText(i + ': ' + str, width - (x0 + x1 + x2 + x3) / 4, (y0 + y1 + y2 + y3) / 4);
+		ctx.restore();
 	}
 
 	function read(offset, len) {
@@ -93,8 +119,6 @@
 		video.onclick = function() { video.play(); };
 		video.play();
 
-		var ctx, width, height;
-
 		setInterval(function() {
 			if (!video.videoWidth) return;
 
@@ -115,6 +139,7 @@
 				log('_xsetup', image, 'pointer');
 				return;
 			}
+			log('interval')
 
 			ctx.save();
 			ctx.drawImage(video, 0, 0, width, height);
