@@ -35,6 +35,10 @@ extern "C" {
 		int i;
 
 		num_codes = quirc_count(qr);
+		EM_ASM_({
+			if (window.counted) counted($0);
+		}, num_codes);
+
 		for (i = 0; i < num_codes; i++) {
 			struct quirc_code code;
 			struct quirc_data data;
@@ -47,19 +51,27 @@ extern "C" {
 			if (err)
 				printf("DECODE FAILED: %s\n", quirc_strerror(err));
 			else {
-				printf("Data: %s\n", data.payload);
-
+				// printf("Data: %s\n", data.payload);
 				EM_ASM_({
 					var a = arguments;
 					var $i = 0;
-					decoded(
+					if (window.decoded) decoded(
+						a[$i++], // i
+						a[$i++], // version
+						a[$i++], // ecc
+						a[$i++], // mask
+						a[$i++], // data type
+						a[$i++], // payload
+						a[$i++], // payload len
+						a[$i++], // corners
 						a[$i++],
 						a[$i++],
 						a[$i++],
 						a[$i++],
 						a[$i++],
 						a[$i++],
-						a[$i++]);
+						a[$i++]
+					);
 				},
 					i,
 					data.version,
@@ -67,7 +79,15 @@ extern "C" {
 					data.mask,
 					data.data_type,
 					data.payload,
-					data.payload_len
+					data.payload_len,
+					code.corners[0].x,
+					code.corners[0].y,
+					code.corners[1].x,
+					code.corners[1].y,
+					code.corners[2].x,
+					code.corners[2].y,
+					code.corners[3].x,
+					code.corners[3].y
 				);
 			}
 		}
@@ -79,13 +99,13 @@ extern "C" {
 		fill();
 
 		// return pointer to image
-		return (long)image;
+		return (long) image;
 	}
 
 	long xprocess() {
 		filled();
 		process();
 		fill();
-		return (long)image;
+		return (long) image;
 	}
 }
