@@ -51,7 +51,6 @@
 
 	function counted(n) {
 		log('counted', n);
-		display_data.innerHTML = '';
 	}
 
 	function decoded(i,
@@ -63,6 +62,9 @@
 		log("Data:", str);
 
 		if (str) {
+			if (str.startsWith('http')) {
+				str = '<a href="' + str + '">' + str + '</a>';
+			}
 			if (i == 0) display_data.innerHTML = str;
 			else display_data.innerHTML += ',' + str;
 		}
