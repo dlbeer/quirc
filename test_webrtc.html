@@ -1,12 +1,25 @@
 <html>
 <body>
-	<script src="quirc.js"></script>
+	<script src="quirc.js" async></script>
 	<h1>Point some QR code to the camera!</h1>
 	<h3>Found [<span style="font-size: 40px" id="display_data"></span>]</h3>
 	<script>
 
 	var last = Date.now();
-	var DEBUG = false;
+	var DEBUG = 0;
+	var ECC = {
+		0: 'M',
+		1: 'L',
+		2: 'H',
+		3: 'Q'
+	};
+
+	var DATA = {
+		1: 'NUMERIC',
+		2: 'ALPHA',
+		3: 'BYTE',
+		4: 'KANJI'
+	};
 
 	function log() {
 		if (!DEBUG) return;
@@ -27,7 +40,7 @@
 		 */
 		log('gofill')
 		for (var i=0, j=0; i < data.length; i+=4, j++) {
-			Module.HEAPU8[image + j] = data[i];
+			Module.HEAPU8[image + j] = 0.2989 * data[i + 0] + 0.5870 * data[i + 1] + 0.1140 * data[i + 2] ;
 		}
 
 		log('writing');
@@ -38,6 +51,7 @@
 
 	function counted(n) {
 		log('counted', n);
+		display_data.innerHTML = '';
 	}
 
 	function decoded(i,
@@ -67,7 +81,7 @@
 		ctx.translate(width, 0);
 		ctx.scale(-1, 1);
 
-		ctx.fillText(i + ': ' + str, width - (x0 + x1 + x2 + x3) / 4, (y0 + y1 + y2 + y3) / 4);
+		ctx.fillText([i, version, ECC[ecc_level], mask, DATA[data_type]].join(': ')+ '  ' + str, width - (x0 + x1 + x2 + x3) / 4, (y0 + y1 + y2 + y3) / 4);
 		ctx.restore();
 	}
 
@@ -90,8 +104,8 @@
 
 	navigator.getUserMedia  = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
 
-	var tw = 640 // 1280 / 2;
-	var th = 480 // 720 / 2;
+	var tw = 640 // 320 // 640 // 1280;
+	var th = 480 // 240 // 480 // 720
 
 	var hdConstraints = {
 		audio: false,
@@ -140,13 +154,12 @@
 				return;
 			}
 			log('interval')
-
-			ctx.save();
+			// console.time('a')
 			ctx.drawImage(video, 0, 0, width, height);
 			var imageData = ctx.getImageData(0,0, width, height);
 			data = imageData.data;
 			gofill();
-			ctx.restore();
+			// console.timeEnd('a')
 		}, 50)
 	}
 	</script>
