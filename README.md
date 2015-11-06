@@ -8,6 +8,16 @@ Examples:
 - [WebRTC demo](https://zz85.github.io/quirc.js/test_webrtc.html)
 - [Image decoding demo](https://zz85.github.io/quirc.js/test.html)
 
+Try this:
+
+![](quirc.js-demo-avatar.png)
+(Links to webrtc demo)
+
+![](quirc.js-doraemon.png)
+(Links to this page)
+
+(generated from [QArt Coder](http://research.swtch.com/qr/show/f4b071224cd98a54))
+
 Quirc
 =====
 

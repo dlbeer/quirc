@@ -1,5 +1,7 @@
 <html>
 <body>
+	(decoded data will also be printed to web developer's console...)
+	<div id="decoded_data"></div>
 	<script src="quirc.js"></script>
 	<script>
 
@@ -33,7 +35,10 @@
 	function decoded(i, version, ecc_level, mask, data_type, payload, payload_len) {
 		// console.log('decoded', arguments)
 		var buffer = read(payload, payload_len);
-		log("Data:", String.fromCharCode.apply(null, buffer));
+
+		var str = String.fromCharCode.apply(null, buffer)
+		decoded_data.innerHTML = str;
+		log("Data:", str);
 
 	}
 
