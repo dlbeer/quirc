@@ -133,7 +133,9 @@
 		video.onclick = function() { video.play(); };
 		video.play();
 
-		setInterval(function() {
+		function getFrame() {
+			requestAnimationFrame(getFrame);
+
 			if (!video.videoWidth) return;
 
 			if (!image) {
@@ -160,7 +162,9 @@
 			data = imageData.data;
 			gofill();
 			// console.timeEnd('a')
-		}, 50)
+		}
+
+		getFrame();
 	}
 	</script>
 </body>
