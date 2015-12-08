@@ -175,7 +175,7 @@ static void setup_table(struct jpeg_decompress_struct *jpeg,
 
 void mjpeg_init(struct mjpeg_decoder *mj)
 {
-	memset(mj, 0, sizeof(mj));
+	memset(mj, 0, sizeof(*mj));
 
 	/* Set up error management */
 	jpeg_std_error(&mj->err);
