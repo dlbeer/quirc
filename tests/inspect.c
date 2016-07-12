@@ -226,7 +226,7 @@ int main(int argc, char **argv)
 	printf("\n");
 
 	if (argc < 2) {
-		fprintf(stderr, "Usage: %s <testfile.jpg>\n", argv[0]);
+		fprintf(stderr, "Usage: %s <testfile.jpg|testfile.png>\n", argv[0]);
 		return -1;
 	}
 
@@ -236,7 +236,13 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
-	if (load_jpeg(q, argv[1]) < 0) {
+	int status = -1;
+	if (check_if_png(argv[1])) {
+		status = load_png(q, argv[1]);
+	} else {
+		status = load_jpeg(q, argv[1]);
+	}
+	if (status < 0) {
 		quirc_destroy(q);
 		return -1;
 	}

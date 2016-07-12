@@ -82,6 +82,7 @@ static void add_result(struct result_info *sum, struct result_info *inf)
 static int scan_file(const char *path, const char *filename,
 		     struct result_info *info)
 {
+	int (*loader)(struct quirc *, const char *);
 	int len = strlen(filename);
 	const char *ext;
 	clock_t start;
@@ -92,15 +93,19 @@ static int scan_file(const char *path, const char *filename,
 	while (len >= 0 && filename[len] != '.')
 		len--;
 	ext = filename + len + 1;
-	if (!(strcasecmp(ext, "jpg") || strcasecmp(ext, "jpeg")))
+	if (strcasecmp(ext, "jpg") == 0 || strcasecmp(ext, "jpeg") == 0)
+		loader = load_jpeg;
+	else if (strcasecmp(ext, "png") == 0)
+		loader = load_png;
+	else
 		return 0;
 
 	total_start = start = clock();
-	ret = load_jpeg(decoder, path);
+	ret = loader(decoder, path);
 	info->load_time = clock() - start;
 
 	if (ret < 0) {
-		fprintf(stderr, "%s: load_jpeg failed\n", filename);
+		fprintf(stderr, "%s: load failed\n", filename);
 		return -1;
 	}
 

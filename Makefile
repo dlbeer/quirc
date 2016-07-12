@@ -38,10 +38,10 @@ DEMO_OBJ = \
 all: libquirc.so qrtest inspect quirc-demo quirc-scanner
 
 qrtest: tests/dbgutil.o tests/qrtest.o libquirc.a
-	$(CC) -o $@ $^ -lm -ljpeg
+	$(CC) -o $@ $^ -lm -ljpeg -lpng
 
 inspect: tests/dbgutil.o tests/inspect.o libquirc.a
-	$(CC) -o $@ $^ -lm -ljpeg $(SDL_LIBS) -lSDL_gfx
+	$(CC) -o $@ $^ -lm -ljpeg -lpng $(SDL_LIBS) -lSDL_gfx
 
 quirc-demo: $(DEMO_OBJ) demo/demo.o libquirc.a
 	$(CC) -o $@ $^ -lm -ljpeg $(SDL_LIBS) -lSDL_gfx

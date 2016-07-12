@@ -14,10 +14,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <string.h>
 #include <stdio.h>
-#include <setjmp.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include <jpeglib.h>
+#include <png.h>
+
 #include "dbgutil.h"
 
 void dump_data(const struct quirc_data *data)
@@ -139,4 +142,132 @@ fail:
 	fclose(infile);
 	jpeg_destroy_decompress(&dinfo);
 	return -1;
+}
+
+/* hacked from https://dev.w3.org/Amaya/libpng/example.c
+ *
+ * Check to see if a file is a PNG file using png_sig_cmp().  png_sig_cmp()
+ * returns zero if the image is a PNG and nonzero if it isn't a PNG.
+ */
+#define PNG_BYTES_TO_CHECK 4
+int check_if_png(const char *filename)
+{
+	int ret = 0;
+	FILE *infile = NULL;
+	unsigned char buf[PNG_BYTES_TO_CHECK];
+
+	/* Open the prospective PNG file. */
+	if ((infile = fopen(filename, "rb")) == NULL)
+		goto out;
+
+	/* Read in some of the signature bytes */
+	if (fread(buf, 1, PNG_BYTES_TO_CHECK, infile) != PNG_BYTES_TO_CHECK)
+		goto out;
+
+	/* Compare the first PNG_BYTES_TO_CHECK bytes of the signature. */
+	if (png_sig_cmp(buf, (png_size_t)0, PNG_BYTES_TO_CHECK) == 0)
+		ret = 1;
+
+	/* FALLTHROUGH */
+out:
+	if (infile)
+		fclose(infile);
+	return (ret);
+}
+
+int load_png(struct quirc *q, const char *filename)
+{
+	int width, height, rowbytes, interlace_type, number_passes = 1;
+	png_byte color_type, bit_depth;
+	png_structp png_ptr = NULL;
+	png_infop info_ptr = NULL;
+	FILE *infile = NULL;
+	uint8_t *image;
+	int ret = -1;
+
+	if ((infile = fopen(filename, "rb")) == NULL)
+		goto out;
+
+	png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+	if (!png_ptr)
+		goto out;
+
+	info_ptr = png_create_info_struct(png_ptr);
+	if (!info_ptr)
+		goto out;
+
+	if (setjmp(png_jmpbuf(png_ptr)))
+		goto out;
+
+	png_init_io(png_ptr, infile);
+
+	png_read_info(png_ptr, info_ptr);
+
+	color_type     = png_get_color_type(png_ptr, info_ptr);
+	bit_depth      = png_get_bit_depth(png_ptr, info_ptr);
+	interlace_type = png_get_interlace_type(png_ptr, info_ptr);
+
+	// Read any color_type into 8bit depth, Grayscale format.
+	// See http://www.libpng.org/pub/png/libpng-manual.txt
+
+	// PNG_COLOR_TYPE_GRAY_ALPHA is always 8 or 16bit depth.
+	if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8)
+		png_set_expand_gray_1_2_4_to_8(png_ptr);
+
+	if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS))
+		png_set_tRNS_to_alpha(png_ptr);
+
+	if (bit_depth == 16)
+		png_set_strip_16(png_ptr);
+
+	if (color_type & PNG_COLOR_MASK_ALPHA)
+		png_set_strip_alpha(png_ptr);
+
+	if (color_type == PNG_COLOR_TYPE_RGB ||
+	    color_type == PNG_COLOR_TYPE_RGB_ALPHA) {
+		png_set_rgb_to_gray_fixed(png_ptr, 1, -1, -1);
+	}
+
+	if (interlace_type != PNG_INTERLACE_NONE)
+		number_passes = png_set_interlace_handling(png_ptr);
+
+	png_read_update_info(png_ptr, info_ptr);
+
+	width    = png_get_image_width(png_ptr, info_ptr);
+	height   = png_get_image_height(png_ptr, info_ptr);
+	rowbytes = png_get_rowbytes(png_ptr, info_ptr);
+	if (rowbytes != width) {
+		fprintf(stderr,
+		    "load_png: expected rowbytes to be %u but got %u\n",
+		    width, rowbytes);
+		goto out;
+	}
+
+	if (quirc_resize(q, width, height) < 0)
+		goto out;
+
+	image = quirc_begin(q, NULL, NULL);
+
+	for (int pass = 0; pass < number_passes; pass++) {
+		for (int y = 0; y < height; y++) {
+			png_bytep row_pointer = image + y * width;
+			png_read_rows(png_ptr, &row_pointer, NULL, 1);
+		}
+	}
+
+	png_read_end(png_ptr, info_ptr);
+
+	ret = 0;
+	/* FALLTHROUGH */
+out:
+	/* cleanup */
+	if (png_ptr) {
+		if (info_ptr)
+			png_destroy_read_struct(&png_ptr, &info_ptr, png_infopp_NULL);
+		else
+			png_destroy_read_struct(&png_ptr, png_infopp_NULL, png_infopp_NULL);
+	}
+	if (infile)
+		fclose(infile);
+	return (ret);
 }
