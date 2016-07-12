@@ -184,6 +184,7 @@ int load_png(struct quirc *q, const char *filename)
 	FILE *infile = NULL;
 	uint8_t *image;
 	int ret = -1;
+	int pass;
 
 	if ((infile = fopen(filename, "rb")) == NULL)
 		goto out;
@@ -248,8 +249,10 @@ int load_png(struct quirc *q, const char *filename)
 
 	image = quirc_begin(q, NULL, NULL);
 
-	for (int pass = 0; pass < number_passes; pass++) {
-		for (int y = 0; y < height; y++) {
+	for (pass = 0; pass < number_passes; pass++) {
+		int y;
+
+		for (y = 0; y < height; y++) {
 			png_bytep row_pointer = image + y * width;
 			png_read_rows(png_ptr, &row_pointer, NULL, 1);
 		}
