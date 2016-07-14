@@ -32,7 +32,10 @@ void dump_cells(const struct quirc_code *code);
  */
 int load_jpeg(struct quirc *q, const char *filename);
 
-/* check if a file is a PNG image. */
+/* Check if a file is a PNG image.
+ *
+ * returns 1 if the given file is a PNG and 0 otherwise.
+ */
 int check_if_png(const char *filename);
 
 /* Read a PNG image into the decoder.

@@ -146,8 +146,8 @@ fail:
 
 /* hacked from https://dev.w3.org/Amaya/libpng/example.c
  *
- * Check to see if a file is a PNG file using png_sig_cmp().  png_sig_cmp()
- * returns zero if the image is a PNG and nonzero if it isn't a PNG.
+ * Check if a file is a PNG image using png_sig_cmp(). Returns 1 if the given
+ * file is a PNG and 0 otherwise.
  */
 #define PNG_BYTES_TO_CHECK 4
 int check_if_png(const char *filename)
@@ -164,7 +164,11 @@ int check_if_png(const char *filename)
 	if (fread(buf, 1, PNG_BYTES_TO_CHECK, infile) != PNG_BYTES_TO_CHECK)
 		goto out;
 
-	/* Compare the first PNG_BYTES_TO_CHECK bytes of the signature. */
+	/*
+	 * Compare the first PNG_BYTES_TO_CHECK bytes of the signature.
+	 * png_sig_cmp() returns zero if the image is a PNG and nonzero if it
+	 * isn't a PNG.
+	 */
 	if (png_sig_cmp(buf, (png_size_t)0, PNG_BYTES_TO_CHECK) == 0)
 		ret = 1;
 
