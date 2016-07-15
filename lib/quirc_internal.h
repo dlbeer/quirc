@@ -23,11 +23,21 @@
 #define QUIRC_PIXEL_BLACK	1
 #define QUIRC_PIXEL_REGION	2
 
+#ifndef QUIRC_MAX_REGIONS
 #define QUIRC_MAX_REGIONS	254
+#endif
 #define QUIRC_MAX_CAPSTONES	32
 #define QUIRC_MAX_GRIDS		8
 
 #define QUIRC_PERSPECTIVE_PARAMS	8
+
+#if QUIRC_MAX_REGIONS < UINT8_MAX
+typedef uint8_t quirc_pixel_t;
+#elif QUIRC_MAX_REGIONS < UINT16_MAX
+typedef uint16_t quirc_pixel_t;
+#else
+#error "QUIRC_MAX_REGIONS > 65534 is not supported"
+#endif
 
 struct quirc_region {
 	struct quirc_point	seed;
@@ -66,6 +76,7 @@ struct quirc_grid {
 
 struct quirc {
 	uint8_t			*image;
+	quirc_pixel_t		*pixels;
 	int			w;
 	int			h;
 

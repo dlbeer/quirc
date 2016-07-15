@@ -38,6 +38,8 @@ void quirc_destroy(struct quirc *q)
 {
 	if (q->image)
 		free(q->image);
+	if (sizeof(*q->image) != sizeof(*q->pixels))
+		free(q->pixels);
 
 	free(q);
 }
@@ -48,6 +50,14 @@ int quirc_resize(struct quirc *q, int w, int h)
 
 	if (!new_image)
 		return -1;
+
+	if (sizeof(*q->image) != sizeof(*q->pixels)) {
+		size_t new_size = w * h * sizeof(quirc_pixel_t);
+		quirc_pixel_t *new_pixels = realloc(q->pixels, new_size);
+		if (!new_pixels)
+			return -1;
+		q->pixels = new_pixels;
+	}
 
 	q->image = new_image;
 	q->w = w;
