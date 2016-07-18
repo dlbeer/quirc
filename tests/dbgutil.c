@@ -228,7 +228,11 @@ int load_png(struct quirc *q, const char *filename)
 	if (color_type & PNG_COLOR_MASK_ALPHA)
 		png_set_strip_alpha(png_ptr);
 
-	if (color_type == PNG_COLOR_TYPE_RGB ||
+	if (color_type == PNG_COLOR_TYPE_PALETTE)
+		png_set_palette_to_rgb(png_ptr);
+
+	if (color_type == PNG_COLOR_TYPE_PALETTE ||
+	    color_type == PNG_COLOR_TYPE_RGB ||
 	    color_type == PNG_COLOR_TYPE_RGB_ALPHA) {
 		png_set_rgb_to_gray_fixed(png_ptr, 1, -1, -1);
 	}
