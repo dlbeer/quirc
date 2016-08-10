@@ -20,7 +20,8 @@ SDL_LIBS != pkg-config --libs sdl
 
 LIB_VERSION = 1.0
 
-QUIRC_CFLAGS = -O3 -Wall -Ilib $(CFLAGS) $(SDL_CFLAGS)
+CFLAGS ?= -O3 -Wall
+QUIRC_CFLAGS = -Ilib $(CFLAGS) $(SDL_CFLAGS)
 LIB_OBJ = \
     lib/decode.o \
     lib/identify.o \
