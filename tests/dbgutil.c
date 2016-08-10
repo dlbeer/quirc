@@ -284,9 +284,9 @@ out:
 	/* cleanup */
 	if (png_ptr) {
 		if (info_ptr)
-			png_destroy_read_struct(&png_ptr, &info_ptr, png_infopp_NULL);
+			png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
 		else
-			png_destroy_read_struct(&png_ptr, png_infopp_NULL, png_infopp_NULL);
+			png_destroy_read_struct(&png_ptr, png_infopp_NULL, (png_infopp)NULL);
 	}
 	if (infile)
 		fclose(infile);
