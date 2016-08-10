@@ -37,16 +37,16 @@ DEMO_OBJ = \
 all: libquirc.so qrtest inspect quirc-demo quirc-scanner
 
 qrtest: tests/dbgutil.o tests/qrtest.o libquirc.a
-	$(CC) -o $@ $^ -lm -ljpeg -lpng
+	$(CC) -o $@ $^ $(LDFLAGS) -lm -ljpeg -lpng
 
 inspect: tests/dbgutil.o tests/inspect.o libquirc.a
-	$(CC) -o $@ $^ -lm -ljpeg -lpng $(SDL_LIBS) -lSDL_gfx
+	$(CC) -o $@ $^ $(LDFLAGS) -lm -ljpeg -lpng $(SDL_LIBS) -lSDL_gfx
 
 quirc-demo: $(DEMO_OBJ) demo/demo.o libquirc.a
-	$(CC) -o $@ $^ -lm -ljpeg $(SDL_LIBS) -lSDL_gfx
+	$(CC) -o $@ $^ $(LDFLAGS) -lm -ljpeg $(SDL_LIBS) -lSDL_gfx
 
 quirc-scanner: $(DEMO_OBJ) demo/scanner.o libquirc.a
-	$(CC) -o $@ $^ -lm -ljpeg
+	$(CC) -o $@ $^ $(LDFLAGS) -lm -ljpeg
 
 libquirc.a: $(LIB_OBJ)
 	rm -f $@
@@ -57,7 +57,7 @@ libquirc.a: $(LIB_OBJ)
 libquirc.so: libquirc.so.$(LIB_VERSION)
 
 libquirc.so.$(LIB_VERSION): $(LIB_OBJ)
-	$(CC) -shared -o $@ $^ -lm
+	$(CC) -shared -o $@ $^ $(LDFLAGS) -lm
 
 %.o: %.c
 	$(CC) -fPIC $(QUIRC_CFLAGS) -o $*.o -c $*.c
