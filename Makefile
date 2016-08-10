@@ -27,7 +27,6 @@ LIB_OBJ = \
     lib/identify.o \
     lib/quirc.o \
     lib/version_db.o
-LIB_SOBJ = $(subst .o,.lo,$(LIB_OBJ))
 DEMO_OBJ = \
     demo/camera.o \
     demo/mjpeg.o \
@@ -54,14 +53,11 @@ libquirc.a: $(LIB_OBJ)
 	ar cru $@ $^
 	ranlib $@
 
-libquirc.so: $(LIB_SOBJ)
+libquirc.so: $(LIB_OBJ)
 	$(CC) -shared -Wl,-soname=$(LIB_SONAME) -o $@ $^ -lm
 
 %.o: %.c
-	$(CC) $(QUIRC_CFLAGS) -o $*.o -c $*.c
-
-%.lo: %.c
-	$(CC) -fPIC $(QUIRC_CFLAGS) -o $*.lo -c $*.c
+	$(CC) -fPIC $(QUIRC_CFLAGS) -o $*.o -c $*.c
 
 install: libquirc.a libquirc.so quirc-demo quirc-scanner
 	install -o root -g root -m 0644 lib/quirc.h $(DESTDIR)$(PREFIX)/include
