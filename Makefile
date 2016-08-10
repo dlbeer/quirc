@@ -15,8 +15,8 @@
 
 CC ?= gcc
 PREFIX ?= /usr/local
-SDL_CFLAGS := $(shell pkg-config --cflags sdl)
-SDL_LIBS := $(shell pkg-config --libs sdl)
+SDL_CFLAGS != pkg-config --cflags sdl
+SDL_LIBS != pkg-config --libs sdl
 
 LIB_VERSION = 1.0
 LIB_SONAME = libquirc.so.1
