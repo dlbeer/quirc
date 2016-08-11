@@ -23,7 +23,11 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <unistd.h>
+#ifdef __OpenBSD__
+#include <sys/videoio.h>
+#else
 #include <linux/videodev2.h>
+#endif
 #include "camera.h"
 
 /************************************************************************
