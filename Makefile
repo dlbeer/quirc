@@ -37,27 +37,27 @@ DEMO_OBJ = \
 all: libquirc.so qrtest inspect quirc-demo quirc-scanner
 
 qrtest: tests/dbgutil.o tests/qrtest.o libquirc.a
-	$(CC) -o $@ $^ $(LDFLAGS) -lm -ljpeg -lpng
+	$(CC) -o $@ tests/dbgutil.o tests/qrtest.o libquirc.a $(LDFLAGS) -lm -ljpeg -lpng
 
 inspect: tests/dbgutil.o tests/inspect.o libquirc.a
-	$(CC) -o $@ $^ $(LDFLAGS) -lm -ljpeg -lpng $(SDL_LIBS) -lSDL_gfx
+	$(CC) -o $@ tests/dbgutil.o tests/inspect.o libquirc.a $(LDFLAGS) -lm -ljpeg -lpng $(SDL_LIBS) -lSDL_gfx
 
 quirc-demo: $(DEMO_OBJ) demo/demo.o libquirc.a
-	$(CC) -o $@ $^ $(LDFLAGS) -lm -ljpeg $(SDL_LIBS) -lSDL_gfx
+	$(CC) -o $@ $(DEMO_OBJ) demo/demo.o libquirc.a $(LDFLAGS) -lm -ljpeg $(SDL_LIBS) -lSDL_gfx
 
 quirc-scanner: $(DEMO_OBJ) demo/scanner.o libquirc.a
-	$(CC) -o $@ $^ $(LDFLAGS) -lm -ljpeg
+	$(CC) -o $@ $(DEMO_OBJ) demo/scanner.o libquirc.a $(LDFLAGS) -lm -ljpeg
 
 libquirc.a: $(LIB_OBJ)
 	rm -f $@
-	ar cru $@ $^
+	ar cru $@ $(LIB_OBJ)
 	ranlib $@
 
 .PHONY: libquirc.so
 libquirc.so: libquirc.so.$(LIB_VERSION)
 
 libquirc.so.$(LIB_VERSION): $(LIB_OBJ)
-	$(CC) -shared -o $@ $^ $(LDFLAGS) -lm
+	$(CC) -shared -o $@ $(LIB_OBJ) $(LDFLAGS) -lm
 
 .c.o:
 	$(CC) -fPIC $(QUIRC_CFLAGS) -o $@ -c $<
