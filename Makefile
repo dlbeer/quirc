@@ -59,8 +59,8 @@ libquirc.so: libquirc.so.$(LIB_VERSION)
 libquirc.so.$(LIB_VERSION): $(LIB_OBJ)
 	$(CC) -shared -o $@ $^ $(LDFLAGS) -lm
 
-%.o: %.c
-	$(CC) -fPIC $(QUIRC_CFLAGS) -o $*.o -c $*.c
+.c.o:
+	$(CC) -fPIC $(QUIRC_CFLAGS) -o $@ -c $<
 
 install: libquirc.a libquirc.so.$(LIB_VERSION) quirc-demo quirc-scanner
 	install -o root -g root -m 0644 lib/quirc.h $(DESTDIR)$(PREFIX)/include
