@@ -5,6 +5,6 @@ quirc-scanner
 qrtest
 inspect
 libquirc.a
-libquirc.so
+libquirc.so*
 .*.swp
 *~
