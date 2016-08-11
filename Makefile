@@ -20,7 +20,7 @@ SDL_LIBS != pkg-config --libs sdl
 
 LIB_VERSION = 1.0
 
-CFLAGS ?= -O3 -Wall
+CFLAGS ?= -O3 -Wall -fPIC
 QUIRC_CFLAGS = -Ilib $(CFLAGS) $(SDL_CFLAGS)
 LIB_OBJ = \
     lib/decode.o \
@@ -60,7 +60,7 @@ libquirc.so.$(LIB_VERSION): $(LIB_OBJ)
 	$(CC) -shared -o $@ $(LIB_OBJ) $(LDFLAGS) -lm
 
 .c.o:
-	$(CC) -fPIC $(QUIRC_CFLAGS) -o $@ -c $<
+	$(CC) $(QUIRC_CFLAGS) -o $@ -c $<
 
 install: libquirc.a libquirc.so.$(LIB_VERSION) quirc-demo quirc-scanner
 	install -o root -g root -m 0644 lib/quirc.h $(DESTDIR)$(PREFIX)/include
