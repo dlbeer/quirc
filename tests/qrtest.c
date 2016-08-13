@@ -31,7 +31,7 @@
 static int want_verbose = 0;
 static int want_cell_dump = 0;
 
-#define CLOCK_TO_MS(c) ((c) / (CLOCKS_PER_SEC / 1000))
+#define MS(c) ((c) / 1000000)
 
 static struct quirc *decoder;
 
@@ -40,9 +40,9 @@ struct result_info {
 	int		id_count;
 	int		decode_count;
 
-	clock_t		load_time;
-	clock_t		identify_time;
-	clock_t		total_time;
+	long		load_time;
+	long		identify_time;
+	long		total_time;
 };
 
 static void print_result(const char *name, struct result_info *info)
@@ -58,14 +58,14 @@ static void print_result(const char *name, struct result_info *info)
 			info->id_count);
 	printf("\n");
 	printf("Total time [load: %ld, identify: %ld, total: %ld]\n",
-	       CLOCK_TO_MS(info->load_time),
-	       CLOCK_TO_MS(info->identify_time),
-	       CLOCK_TO_MS(info->total_time));
+	       MS(info->load_time),
+	       MS(info->identify_time),
+	       MS(info->total_time));
 	if (info->file_count)
 		printf("Average time [load: %ld, identify: %ld, total: %ld]\n",
-		       CLOCK_TO_MS(info->load_time / info->file_count),
-		       CLOCK_TO_MS(info->identify_time / info->file_count),
-		       CLOCK_TO_MS(info->total_time / info->file_count));
+		       MS(info->load_time / info->file_count),
+		       MS(info->identify_time / info->file_count),
+		       MS(info->total_time / info->file_count));
 }
 
 static void add_result(struct result_info *sum, struct result_info *inf)
@@ -85,8 +85,9 @@ static int scan_file(const char *path, const char *filename,
 	int (*loader)(struct quirc *, const char *);
 	int len = strlen(filename);
 	const char *ext;
-	clock_t start;
-	clock_t total_start;
+	struct timespec tp;
+	long start;
+	long total_start;
 	int ret;
 	int i;
 
@@ -100,18 +101,22 @@ static int scan_file(const char *path, const char *filename,
 	else
 		return 0;
 
-	total_start = start = clock();
+	(void)clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &tp);
+	total_start = start = tp.tv_nsec;
 	ret = loader(decoder, path);
-	info->load_time = clock() - start;
+	(void)clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &tp);
+	info->load_time = tp.tv_nsec - start;
 
 	if (ret < 0) {
 		fprintf(stderr, "%s: load failed\n", filename);
 		return -1;
 	}
 
-	start = clock();
+	(void)clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &tp);
+	start = tp.tv_nsec;
 	quirc_end(decoder);
-	info->identify_time = clock() - start;
+	(void)clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &tp);
+	info->identify_time = tp.tv_nsec - start;
 
 	info->id_count = quirc_count(decoder);
 	for (i = 0; i < info->id_count; i++) {
@@ -124,12 +129,13 @@ static int scan_file(const char *path, const char *filename,
 			info->decode_count++;
 	}
 
-	info->total_time += clock() - total_start;
+	(void)clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &tp);
+	info->total_time += tp.tv_nsec - total_start;
 
 	printf("  %-30s: %5ld %5ld %5ld %5d %5d\n", filename,
-	       CLOCK_TO_MS(info->load_time),
-	       CLOCK_TO_MS(info->identify_time),
-	       CLOCK_TO_MS(info->total_time),
+	       MS(info->load_time),
+	       MS(info->identify_time),
+	       MS(info->total_time),
 	       info->id_count, info->decode_count);
 
 	if (want_cell_dump || want_verbose) {
