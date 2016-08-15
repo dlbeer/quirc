@@ -233,7 +233,7 @@ int load_png(struct quirc *q, const char *filename)
 		png_set_tRNS_to_alpha(png_ptr);
 
 	if (bit_depth == 16)
-		png_set_strip_16(png_ptr);
+		png_set_scale_16(png_ptr);
 
 	if (color_type & PNG_COLOR_MASK_ALPHA)
 		png_set_strip_alpha(png_ptr);
