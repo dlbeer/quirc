@@ -86,8 +86,8 @@ static int scan_file(const char *path, const char *filename,
 	int len = strlen(filename);
 	const char *ext;
 	struct timespec tp;
-	long start;
-	long total_start;
+	unsigned int start;
+	unsigned int total_start;
 	int ret;
 	int i;
 
