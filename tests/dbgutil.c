@@ -192,6 +192,7 @@ out:
 int load_png(struct quirc *q, const char *filename)
 {
 	int width, height, rowbytes, interlace_type, number_passes = 1;
+	png_uint_32 trns;
 	png_byte color_type, bit_depth;
 	png_structp png_ptr = NULL;
 	png_infop info_ptr = NULL;
@@ -229,13 +230,13 @@ int load_png(struct quirc *q, const char *filename)
 	if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8)
 		png_set_expand_gray_1_2_4_to_8(png_ptr);
 
-	if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS))
+	if ((trns = png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)))
 		png_set_tRNS_to_alpha(png_ptr);
 
 	if (bit_depth == 16)
-		png_set_strip_16(png_ptr);
+		png_set_scale_16(png_ptr);
 
-	if (color_type & PNG_COLOR_MASK_ALPHA)
+	if ((trns) || color_type & PNG_COLOR_MASK_ALPHA)
 		png_set_strip_alpha(png_ptr);
 
 	if (color_type == PNG_COLOR_TYPE_PALETTE)
