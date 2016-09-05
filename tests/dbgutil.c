@@ -234,7 +234,11 @@ int load_png(struct quirc *q, const char *filename)
 		png_set_tRNS_to_alpha(png_ptr);
 
 	if (bit_depth == 16)
+#if PNG_LIBPNG_VER >= 10504
 		png_set_scale_16(png_ptr);
+#else
+		png_set_strip_16(png_ptr);
+#endif
 
 	if ((trns) || color_type & PNG_COLOR_MASK_ALPHA)
 		png_set_strip_alpha(png_ptr);
