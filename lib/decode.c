@@ -802,6 +802,29 @@ static quirc_decode_error_t decode_kanji(struct quirc_data *data,
 	return QUIRC_SUCCESS;
 }
 
+static quirc_decode_error_t decode_eci(struct quirc_data *data,
+				       struct datastream *ds)
+{
+	if (bits_remaining(ds) < 8)
+		return QUIRC_ERROR_DATA_UNDERFLOW;
+
+	data->eci = take_bits(ds, 8);
+
+	if ((data->eci & 0xc0) == 0x80) {
+		if (bits_remaining(ds) < 8)
+			return QUIRC_ERROR_DATA_UNDERFLOW;
+
+		data->eci = (data->eci << 8) | take_bits(ds, 8);
+	} else if ((data->eci & 0xe0) == 0xc0) {
+		if (bits_remaining(ds) < 16)
+			return QUIRC_ERROR_DATA_UNDERFLOW;
+
+		data->eci = (data->eci << 16) | take_bits(ds, 16);
+	}
+
+	return QUIRC_SUCCESS;
+}
+
 static quirc_decode_error_t decode_payload(struct quirc_data *data,
 					   struct datastream *ds)
 {
@@ -826,6 +849,10 @@ static quirc_decode_error_t decode_payload(struct quirc_data *data,
 			err = decode_kanji(data, ds);
 			break;
 
+		case 7:
+			err = decode_eci(data, ds);
+			break;
+
 		default:
 			goto done;
 		}
@@ -833,7 +860,7 @@ static quirc_decode_error_t decode_payload(struct quirc_data *data,
 		if (err)
 			return err;
 
-		if (type > data->data_type)
+		if (!(type & (type - 1)) && (type > data->data_type))
 			data->data_type = type;
 	}
 done:

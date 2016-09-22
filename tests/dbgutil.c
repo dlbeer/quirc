@@ -46,6 +46,9 @@ void dump_data(const struct quirc_data *data)
 	    data->data_type, data_type_str(data->data_type));
 	printf("    Length: %d\n", data->payload_len);
 	printf("    Payload: %s\n", data->payload);
+
+	if (data->eci)
+		printf("    ECI: %d\n", data->eci);
 }
 
 void dump_cells(const struct quirc_code *code)
