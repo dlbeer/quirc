@@ -25,20 +25,25 @@
 
 #include "dbgutil.h"
 
+static const char *data_type_str(int dt)
+{
+	switch (dt) {
+	case QUIRC_DATA_TYPE_NUMERIC: return "NUMERIC";
+	case QUIRC_DATA_TYPE_ALPHA:   return "ALPHA";
+	case QUIRC_DATA_TYPE_BYTE:    return "BYTE";
+	case QUIRC_DATA_TYPE_KANJI:   return "KANJI";
+	}
+
+	return "unknown";
+}
+
 void dump_data(const struct quirc_data *data)
 {
-	static const char *data_type_str[] = {
-		[QUIRC_DATA_TYPE_NUMERIC] = "NUMERIC",
-		[QUIRC_DATA_TYPE_ALPHA]   = "ALPHANUMERIC",
-		[QUIRC_DATA_TYPE_BYTE]    = "BINARY",
-		[QUIRC_DATA_TYPE_KANJI]   = "KANJI",
-	};
-
 	printf("    Version: %d\n", data->version);
 	printf("    ECC level: %c\n", "MLHQ"[data->ecc_level]);
 	printf("    Mask: %d\n", data->mask);
 	printf("    Data type: %d (%s)\n",
-	    data->data_type, data_type_str[data->data_type]);
+	    data->data_type, data_type_str(data->data_type));
 	printf("    Length: %d\n", data->payload_len);
 	printf("    Payload: %s\n", data->payload);
 }
