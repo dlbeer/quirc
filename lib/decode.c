@@ -127,30 +127,6 @@ const static struct galois_field gf256 = {
  * Polynomial operations
  */
 
-static void poly_mult(uint8_t *r, const uint8_t *a, const uint8_t *b,
-		      const struct galois_field *gf)
-{
-	int i;
-
-	memset(r, 0, MAX_POLY);
-
-	for (i = 0; i < MAX_POLY; i++) {
-		int j;
-
-		for (j = 0; j + i < MAX_POLY; j++) {
-			uint8_t ca = a[i];
-			uint8_t cb = b[j];
-
-			if (!(ca && cb))
-				continue;
-
-			r[i + j] ^= gf->exp[(gf->log[ca] +
-					     gf->log[cb]) %
-					    gf->p];
-		}
-	}
-}
-
 static void poly_add(uint8_t *dst, const uint8_t *src, uint8_t c,
 		     int shift, const struct galois_field *gf)
 {
@@ -274,7 +250,7 @@ static int block_syndromes(const uint8_t *data, int bs, int npar, uint8_t *s)
 				continue;
 
 			s[i] ^= gf256_exp[((int)gf256_log[c] +
-					  (i + 1) * j) % 255];
+				    i * j) % 255];
 		}
 
 		if (s[i])
@@ -284,9 +260,41 @@ static int block_syndromes(const uint8_t *data, int bs, int npar, uint8_t *s)
 	return nonzero;
 }
 
-static quirc_decode_error_t correct_block(uint8_t *data, const struct quirc_rs_params *ecc)
+static void eloc_poly(uint8_t *omega,
+		      const uint8_t *s, const uint8_t *sigma,
+		      int npar)
 {
-	int npar = ecc->ce;
+	int i;
+
+	memset(omega, 0, MAX_POLY);
+
+	for (i = 0; i < npar; i++) {
+		const uint8_t a = sigma[i];
+		const uint8_t log_a = gf256_log[a];
+		int j;
+
+		if (!a)
+			continue;
+
+		for (j = 0; j + 1 < MAX_POLY; j++) {
+			const uint8_t b = s[j + 1];
+
+			if (i + j >= npar)
+				break;
+
+			if (!b)
+				continue;
+
+			omega[i + j] ^=
+			    gf256_exp[(log_a + gf256_log[b]) % 255];
+		}
+	}
+}
+
+static quirc_decode_error_t correct_block(uint8_t *data,
+					  const struct quirc_rs_params *ecc)
+{
+	int npar = ecc->bs - ecc->dw;
 	uint8_t s[MAX_POLY];
 	uint8_t sigma[MAX_POLY];
 	uint8_t sigma_deriv[MAX_POLY];
@@ -305,8 +313,7 @@ static quirc_decode_error_t correct_block(uint8_t *data, const struct quirc_rs_p
 		sigma_deriv[i] = sigma[i + 1];
 
 	/* Compute error evaluator polynomial */
-	poly_mult(omega, sigma, s, &gf256);
-	memset(omega + npar, 0, MAX_POLY - npar);
+	eloc_poly(omega, s, sigma, npar - 1);
 
 	/* Find error locations and magnitudes */
 	for (i = 0; i < ecc->bs; i++) {
