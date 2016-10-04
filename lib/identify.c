@@ -174,6 +174,7 @@ static void flood_fill_seed(struct quirc *q, int x, int y, int from, int to,
  * Adaptive thresholding
  */
 
+#define THRESHOLD_S_MIN		1
 #define THRESHOLD_S_DEN		8
 #define THRESHOLD_T		5
 
@@ -184,6 +185,15 @@ static void threshold(struct quirc *q)
 	int avg_u = 0;
 	int threshold_s = q->w / THRESHOLD_S_DEN;
 	quirc_pixel_t *row = q->pixels;
+
+	/*
+	 * Ensure a sane, non-zero value for threshold_s to
+	 *
+	 * threshold_s can be zero if the image width is small. We need to avoid
+	 * SIGFPE as it will be used as divisor.
+	 */
+	if (threshold_s < THRESHOLD_S_MIN)
+		threshold_s = THRESHOLD_S_MIN;
 
 	for (y = 0; y < q->h; y++) {
 		int row_average[q->w];
