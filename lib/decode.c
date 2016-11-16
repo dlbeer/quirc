@@ -729,10 +729,10 @@ static quirc_decode_error_t decode_alpha(struct quirc_data *data,
 	int bits = 13;
 	int count;
 
-	if (data->version < 7)
+	if (data->version < 10)
 		bits = 9;
-	else if (data->version < 11)
-		bits = 10;
+	else if (data->version < 27)
+		bits = 11;
 
 	count = take_bits(ds, bits);
 	if (data->payload_len + count + 1 > QUIRC_MAX_PAYLOAD)
