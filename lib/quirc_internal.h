@@ -98,9 +98,9 @@ struct quirc {
 #define QUIRC_MAX_ALIGNMENT   7
 
 struct quirc_rs_params {
-	int             bs; /* Block size */
-	int             dw; /* Data words */
-	int             ce; /* Correctable errors */
+	int             bs; /* Small block size */
+	int             dw; /* Small data words */
+	int		ns; /* Number of small blocks */
 };
 
 struct quirc_version_info {

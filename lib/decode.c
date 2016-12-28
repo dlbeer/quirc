@@ -576,10 +576,11 @@ static quirc_decode_error_t codestream_ecc(struct quirc_data *data,
 		&quirc_version_db[data->version];
 	const struct quirc_rs_params *sb_ecc = &ver->ecc[data->ecc_level];
 	struct quirc_rs_params lb_ecc;
-	int bc = ver->data_bytes / sb_ecc->bs;
+	const int lb_count =
+	    (ver->data_bytes - sb_ecc->bs * sb_ecc->ns) / (sb_ecc->bs + 1);
+	const int bc = lb_count + sb_ecc->ns;
+	const int ecc_offset = sb_ecc->dw * bc + lb_count;
 	int dst_offset = 0;
-	int lb_count = ver->data_bytes - bc * sb_ecc->bs;
-	int small_dw_total = bc * sb_ecc->dw;
 	int i;
 
 	memcpy(&lb_ecc, sb_ecc, sizeof(lb_ecc));
@@ -588,22 +589,16 @@ static quirc_decode_error_t codestream_ecc(struct quirc_data *data,
 
 	for (i = 0; i < bc; i++) {
 		uint8_t *dst = ds->data + dst_offset;
-		const struct quirc_rs_params *ecc = sb_ecc;
+		const struct quirc_rs_params *ecc =
+		    (i < sb_ecc->ns) ? sb_ecc : &lb_ecc;
+		const int num_ec = ecc->bs - ecc->dw;
 		quirc_decode_error_t err;
-		int j = 0;
-		int k;
+		int j;
 
-		for (k = 0; k < sb_ecc->dw; k++)
-			dst[j++] = ds->raw[k * bc + i];
-
-		if (i + lb_count >= bc) {
-			dst[j++] = ds->raw[small_dw_total + i - lb_count];
-			ecc = &lb_ecc;
-		}
-
-		for (k = 0; k < sb_ecc->bs - sb_ecc->dw; k++)
-			dst[j++] = ds->raw[small_dw_total + lb_count + i +
-					   k * bc];
+		for (j = 0; j < ecc->dw; j++)
+			dst[j] = ds->raw[j * bc + i];
+		for (j = 0; j < num_ec; j++)
+			dst[ecc->dw + j] = ds->raw[ecc_offset + j * bc + i];
 
 		err = correct_block(dst, ecc);
 		if (err)
