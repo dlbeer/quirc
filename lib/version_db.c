@@ -152,10 +152,10 @@ const struct quirc_version_info quirc_version_db[QUIRC_MAX_VERSION + 1] = {
 		    .data_bytes = 581,
 		    .apat = {6, 26, 46, 66, 0},
 		    .ecc = {
-			    {.bs = 65, .dw = 41, .ce = 12},
-			    {.bs = 109, .dw = 87, .ce = 11},
+			    {.bs = 64, .dw = 40, .ce = 12},
+			    {.bs = 145, .dw = 115, .ce = 11},
 			    {.bs = 36, .dw = 12, .ce = 12},
-			    {.bs = 54, .dw = 24, .ce = 15}
+			    {.bs = 36, .dw = 16, .ce = 15}
 		    }
 	    },
 	    { /* Version 15 */
@@ -305,7 +305,7 @@ const struct quirc_version_info quirc_version_db[QUIRC_MAX_VERSION + 1] = {
 			    {.bs = 73, .dw = 45, .ce = 14},
 			    {.bs = 146, .dw = 116, .ce = 15},
 			    {.bs = 45, .dw = 15, .ce = 15},
-			    {.bs = 73, .dw = 45, .ce = 14}
+			    {.bs = 43, .dw = 23, .ce = 14}
 		    }
 	    },
 	    { /* Version 30 */
@@ -340,7 +340,7 @@ const struct quirc_version_info quirc_version_db[QUIRC_MAX_VERSION + 1] = {
 	    },
 	    { /* Version 33 */
 		    .data_bytes = 2611,
-		    .apat = {6, 30, 58, 96, 114, 142, 0},
+		    .apat = {6, 30, 58, 86, 114, 142, 0},
 		    .ecc = {
 			    {.bs = 74, .dw = 46, .ce = 14},
 			    {.bs = 145, .dw = 115, .ce = 15},
