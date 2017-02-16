@@ -8,3 +8,4 @@ libquirc.a
 libquirc.so*
 .*.swp
 *~
+.DS_Store
