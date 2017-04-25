@@ -121,7 +121,7 @@ struct quirc_code {
 	 * is a bitmask giving the actual values of cells. If the cell
 	 * at (x, y) is black, then the following bit is set:
 	 *
-	 *     cell_bitmap[i << 3] & (1 << (i & 7))
+	 *     cell_bitmap[i >> 3] & (1 << (i & 7))
 	 *
 	 * where i = (y * size) + x.
 	 */
