@@ -54,8 +54,12 @@ int quirc_resize(struct quirc *q, int w, int h)
 	if (sizeof(*q->image) != sizeof(*q->pixels)) {
 		size_t new_size = w * h * sizeof(quirc_pixel_t);
 		quirc_pixel_t *new_pixels = realloc(q->pixels, new_size);
-		if (!new_pixels)
+
+		if (!new_pixels) {
+			free(new_image);
 			return -1;
+		}
+
 		q->pixels = new_pixels;
 	}
 
