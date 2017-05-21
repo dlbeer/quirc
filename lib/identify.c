@@ -211,17 +211,19 @@ static void threshold(struct quirc *q)
 				u = x;
 			}
 
-			avg_w = (avg_w * (threshold_s - 1)) /
-				threshold_s + row[w];
-			avg_u = (avg_u * (threshold_s - 1)) /
-				threshold_s + row[u];
+			if (threshold_s > 0) {
+				avg_w = (avg_w * (threshold_s - 1)) /
+					threshold_s + row[w];
+				avg_u = (avg_u * (threshold_s - 1)) /
+					threshold_s + row[u];
+			}
 
 			row_average[w] += avg_w;
 			row_average[u] += avg_u;
 		}
 
 		for (x = 0; x < q->w; x++) {
-			if (row[x] < row_average[x] *
+			if (threshold_s > 0 && row[x] < row_average[x] *
 			    (100 - THRESHOLD_T) / (200 * threshold_s))
 				row[x] = QUIRC_PIXEL_BLACK;
 			else
