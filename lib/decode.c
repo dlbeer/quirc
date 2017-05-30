@@ -799,7 +799,7 @@ static quirc_decode_error_t decode_kanji(struct quirc_data *data,
 			/* bytes are in the range 0x8140 to 0x9FFC */
 			sjw = intermediate + 0x8140;
 		} else {
-			/* bytes are in the range 0x8140 to 0x9FFC */
+			/* bytes are in the range 0xE040 to 0xEBBF */
 			sjw = intermediate + 0xc140;
 		}
 
