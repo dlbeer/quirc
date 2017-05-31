@@ -178,7 +178,7 @@ void mjpeg_init(struct mjpeg_decoder *mj)
 	memset(mj, 0, sizeof(*mj));
 
 	/* Set up error management */
-	jpeg_std_error(&mj->err);
+	mj->dinfo.err = jpeg_std_error(&mj->err);
 	mj->err.error_exit = my_error_exit;
 	mj->err.output_message = my_output_message;
 
