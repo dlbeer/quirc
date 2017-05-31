@@ -86,7 +86,7 @@ static void my_output_message(struct jpeg_common_struct *com)
 	char buf[JMSG_LENGTH_MAX];
 
 	err->base.format_message(com, buf);
-	fprintf(stderr, "JPEG error: %s", buf);
+	fprintf(stderr, "JPEG error: %s\n", buf);
 }
 
 static void my_error_exit(struct jpeg_common_struct *com)
@@ -151,8 +151,8 @@ int load_jpeg(struct quirc *q, const char *filename)
 		jpeg_read_scanlines(&dinfo, &row_pointer, 1);
 	}
 
-	fclose(infile);
 	jpeg_finish_decompress(&dinfo);
+	fclose(infile);
 	jpeg_destroy_decompress(&dinfo);
 	return 0;
 
