@@ -117,7 +117,7 @@ static const uint8_t gf256_log[256] = {
 	0x74, 0xd6, 0xf4, 0xea, 0xa8, 0x50, 0x58, 0xaf
 };
 
-const static struct galois_field gf256 = {
+static const struct galois_field gf256 = {
 	.p = 255,
 	.log = gf256_log,
 	.exp = gf256_exp
