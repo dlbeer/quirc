@@ -281,7 +281,7 @@ static void usage(const char *progname)
 
 int main(int argc, char **argv)
 {
-	const static struct option longopts[] = {
+	static const struct option longopts[] = {
 		{"help",		0, 0, 'H'},
 		{"version",		0, 0, 'V'},
 		{NULL,			0, 0, 0}
