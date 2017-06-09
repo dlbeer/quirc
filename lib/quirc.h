@@ -40,8 +40,7 @@ void quirc_destroy(struct quirc *q);
  * specified before codes can be analyzed.
  *
  * This function returns 0 on success, or -1 if sufficient memory could
- * not be allocated. On failure the QR-code recognizer should not be
- * used and is expected to be given to quirc_destroy() for cleanup.
+ * not be allocated.
  */
 int quirc_resize(struct quirc *q, int w, int h);
 

@@ -45,23 +45,63 @@ void quirc_destroy(struct quirc *q)
 
 int quirc_resize(struct quirc *q, int w, int h)
 {
-	uint8_t *new_image = realloc(q->image, w * h);
-	if (!new_image)
-		return -1;
-	q->image = new_image;
+	uint8_t		*image  = NULL;
+	quirc_pixel_t	*pixels = NULL;
 
+	/*
+	 * XXX: w and h should be size_t (or at least unsigned) as negatives
+	 * values would not make much sense. The downside is that it would break
+	 * both the API and ABI. Thus, at the moment, let's just do a sanity
+	 * check.
+	 */
+	if (w < 0 || h < 0)
+		goto fail;
+
+	/*
+	 * alloc a new buffer for q->image. We avoid realloc(3) because we want
+	 * on failure to be leave `q` in a consistant, unmodified state.
+	 */
+	image = calloc(w, h);
+	if (!image)
+		goto fail;
+
+	/* compute the "old" (i.e. currently allocated) and the "new"
+	   (i.e. requested) image dimensions */
+	size_t olddim = q->w * q->h;
+	size_t newdim = w * h;
+	size_t min = (olddim < newdim ? olddim : newdim);
+
+	/*
+	 * copy the data into the new buffer, avoiding (a) to read beyond the
+	 * old buffer when the new size is greater and (b) to write beyond the
+	 * new buffer when the new size is smaller, hence the min computation.
+	 */
+	(void)memcpy(image, q->image, min);
+
+	/* alloc a new buffer for q->pixels if needed */
 	if (sizeof(*q->image) != sizeof(*q->pixels)) {
-		size_t new_size = w * h * sizeof(quirc_pixel_t);
-		quirc_pixel_t *new_pixels = realloc(q->pixels, new_size);
-		if (!new_pixels)
-			return -1;
-		q->pixels = new_pixels;
+		pixels = calloc(newdim, sizeof(quirc_pixel_t));
+		if (!pixels)
+			goto fail;
 	}
 
+	/* alloc succeeded, update `q` with the new size and buffers */
 	q->w = w;
 	q->h = h;
+	free(q->image);
+	q->image = image;
+	if (sizeof(*q->image) != sizeof(*q->pixels)) {
+		free(q->pixels);
+		q->pixels = pixels;
+	}
 
 	return 0;
+	/* NOTREACHED */
+fail:
+	free(image);
+	free(pixels);
+
+	return -1;
 }
 
 int quirc_count(const struct quirc *q)
