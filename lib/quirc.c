@@ -38,7 +38,7 @@ void quirc_destroy(struct quirc *q)
 {
 	free(q->image);
 	/* q->pixels may alias q->image when their type representation is of the
-	   same size, so we need to be careful here */
+	   same size, so we need to be careful here to avoid a double free */
 	if (sizeof(*q->image) != sizeof(*q->pixels))
 		free(q->pixels);
 	free(q->row_average);
