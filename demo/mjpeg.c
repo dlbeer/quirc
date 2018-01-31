@@ -232,15 +232,16 @@ int mjpeg_decode_rgb32(struct mjpeg_decoder *mj,
 	}
 	while (mj->dinfo.output_scanline < mj->dinfo.image_height) {
 		uint8_t *scr = out + pitch * mj->dinfo.output_scanline;
+		uint8_t *output = rgb;
 		int i;
 
-		jpeg_read_scanlines(&mj->dinfo, &rgb, 1);
+		jpeg_read_scanlines(&mj->dinfo, &output, 1);
 		for (i = 0; i < mj->dinfo.image_width; i++) {
-			scr[0] = rgb[2];
-			scr[1] = rgb[1];
-			scr[2] = rgb[0];
+			scr[0] = output[2];
+			scr[1] = output[1];
+			scr[2] = output[0];
 			scr += 4;
-			rgb += 3;
+			output += 3;
 		}
 	}
 	free(rgb);
