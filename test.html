@@ -1,0 +1,86 @@
+<html>
+<body>
+	(decoded data will also be printed to web developer's console...)
+	<div id="decoded_data"></div>
+	<script src="quirc.js"></script>
+	<script>
+
+	var last = Date.now();
+	function log() {
+		var now = Date.now();
+		var args = Array.prototype.slice.call(arguments);
+		args.unshift('+' + (now - last) + 'ms');
+		console.log.apply(console, args);
+		last = now;
+	}
+
+	var data, image;
+
+	function gofill() {
+		/* Fill out the image buffer here.
+		 * image is a pointer to a w*h bytes.
+		 * One byte per pixel, w pixels per line, h lines in the buffer.
+		 */
+		log('gofill')
+		for (var i=0, j=0; i < data.length; i+=4, j++) {
+			Module.HEAPU8[image + j] = data[i];
+		}
+
+		log('writing');
+
+		var a = Module._xprocess();
+		log('quirc_end', a);
+	}
+
+	function decoded(i, version, ecc_level, mask, data_type, payload, payload_len) {
+		// console.log('decoded', arguments)
+		var buffer = read(payload, payload_len);
+
+		var str = String.fromCharCode.apply(null, buffer)
+		decoded_data.innerHTML = str;
+		log("Data:", str);
+
+	}
+
+	function read(offset, len) {
+		return new Uint8Array(Module.HEAPU8.buffer, offset, len);
+	}
+
+	function raw_quirc_apis() {
+		var quirc = {}
+		Object
+			.keys(Module)
+			.filter(function(f) { return f.startsWith('_quirc') })
+			.map(function(f) { return f.substring(7) })
+			.some(function(f) { quirc[f] = Module['_quirc_' + f] });
+		log('quirc', quirc);
+	}
+
+	var img = new Image;
+	img.src = 'qr.png';
+	img.onload = function() {
+		var width = this.width, height = this.height;
+
+		var canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		var ctx = canvas.getContext('2d');
+		ctx.drawImage(this, 0, 0);
+		var imageData = ctx.getImageData(0,0, width, height);
+		data = imageData.data;
+		document.body.appendChild(canvas);
+
+		log('start');
+		image = Module._xsetup(width, height);
+		log('_xsetup', image, 'pointer');
+
+		setInterval(function() {
+			gofill();
+		}, 1000)
+
+		// log('quirc_destroy', quirc.destroy(qr));
+	}
+
+	</script>
+</body>
+</html>
