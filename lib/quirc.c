@@ -41,7 +41,6 @@ void quirc_destroy(struct quirc *q)
 	   same size, so we need to be careful here to avoid a double free */
 	if (sizeof(*q->image) != sizeof(*q->pixels))
 		free(q->pixels);
-	free(q->row_average);
 	free(q);
 }
 
@@ -49,7 +48,6 @@ int quirc_resize(struct quirc *q, int w, int h)
 {
 	uint8_t		*image  = NULL;
 	quirc_pixel_t	*pixels = NULL;
-	int		*row_average = NULL;
 
 	/*
 	 * XXX: w and h should be size_t (or at least unsigned) as negatives
@@ -88,11 +86,6 @@ int quirc_resize(struct quirc *q, int w, int h)
 			goto fail;
 	}
 
-	/* alloc a new buffer for q->row_average */
-	row_average = calloc(w, sizeof(int));
-	if (!row_average)
-		goto fail;
-
 	/* alloc succeeded, update `q` with the new size and buffers */
 	q->w = w;
 	q->h = h;
@@ -102,15 +95,12 @@ int quirc_resize(struct quirc *q, int w, int h)
 		free(q->pixels);
 		q->pixels = pixels;
 	}
-	free(q->row_average);
-	q->row_average = row_average;
 
 	return 0;
 	/* NOTREACHED */
 fail:
 	free(image);
 	free(pixels);
-	free(row_average);
 
 	return -1;
 }
