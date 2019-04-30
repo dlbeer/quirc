@@ -174,55 +174,55 @@ static void flood_fill_seed(struct quirc *q, int x, int y, int from, int to,
  * Adaptive thresholding
  */
 
-uint8_t otsu(struct quirc *q)
+uint8_t otsu(const struct quirc *q)
 {
-    int numPixels = q->w * q->h;
+	int numPixels = q->w * q->h;
 
-    // Calculate histogram
-    const int HISTOGRAM_SIZE = 256;
-    unsigned int histogram[HISTOGRAM_SIZE];
-    memset(histogram, 0, (HISTOGRAM_SIZE) * sizeof(unsigned int));
-    uint8_t* ptr = q->image;
-    int length = numPixels;
-    while (length--) {
-        uint8_t value = *ptr++;
-        histogram[value]++;
-    }
+	// Calculate histogram
+	const int HISTOGRAM_SIZE = 256;
+	unsigned int histogram[HISTOGRAM_SIZE];
+	memset(histogram, 0, (HISTOGRAM_SIZE) * sizeof(unsigned int));
+	uint8_t* ptr = q->image;
+	int length = numPixels;
+	while (length--) {
+		uint8_t value = *ptr++;
+		histogram[value]++;
+	}
 
-    // Calculate weighted sum of histogram values
-    int sum = 0;
-    for (int i = 0; i < HISTOGRAM_SIZE; ++i) {
-        sum += i * histogram[i];
-    }
+	// Calculate weighted sum of histogram values
+	int sum = 0;
+	for (int i = 0; i < HISTOGRAM_SIZE; ++i) {
+		sum += i * histogram[i];
+	}
 
-    // Compute threshold
-    int sumB = 0;
-    int q1 = 0;
-    double max = 0;
-    uint8_t threshold = 0;
-    for (int i = 0; i < HISTOGRAM_SIZE; ++i) {
-        // Weighted background
-        q1 += histogram[i];
-        if (q1 == 0)
-            continue;
+	// Compute threshold
+	int sumB = 0;
+	int q1 = 0;
+	double max = 0;
+	uint8_t threshold = 0;
+	for (int i = 0; i < HISTOGRAM_SIZE; ++i) {
+		// Weighted background
+		q1 += histogram[i];
+		if (q1 == 0)
+			continue;
 
-        // Weighted foreground
-        const int q2 = numPixels - q1;
-        if (q2 == 0)
-            break;
+		// Weighted foreground
+		const int q2 = numPixels - q1;
+		if (q2 == 0)
+			break;
 
-        sumB += i * histogram[i];
-        const double m1 = (double)sumB / q1;
-        const double m2 = ((double)sum - sumB) / q2;
-        const double m1m2 = m1 - m2;
-        const double variance = m1m2 * m1m2 * q1 * q2;
-        if (variance > max) {
-            threshold = i;
-            max = variance;
-        }
-    }
+		sumB += i * histogram[i];
+		const double m1 = (double)sumB / q1;
+		const double m2 = ((double)sum - sumB) / q2;
+		const double m1m2 = m1 - m2;
+		const double variance = m1m2 * m1m2 * q1 * q2;
+		if (variance > max) {
+			threshold = i;
+			max = variance;
+		}
+	}
 
-    return threshold;
+	return threshold;
 }
 
 static void area_count(void *user_data, int y, int left, int right)
@@ -1071,17 +1071,17 @@ static void test_grouping(struct quirc *q, int i)
 
 static void pixels_setup(struct quirc *q, uint8_t threshold)
 {
-    if (sizeof(*q->image) == sizeof(*q->pixels)) {
-        q->pixels = (quirc_pixel_t *)q->image;
-    }
+	if (sizeof(*q->image) == sizeof(*q->pixels)) {
+		q->pixels = (quirc_pixel_t *)q->image;
+	}
 
-    uint8_t* source = q->image;
-    quirc_pixel_t* dest = q->pixels;
-    int length = q->w * q->h;
-    while (length--) {
-        uint8_t value = *source++;
-        *dest++ = (value < threshold) ? QUIRC_PIXEL_BLACK : QUIRC_PIXEL_WHITE;
-    }
+	uint8_t* source = q->image;
+	quirc_pixel_t* dest = q->pixels;
+	int length = q->w * q->h;
+	while (length--) {
+		uint8_t value = *source++;
+		*dest++ = (value < threshold) ? QUIRC_PIXEL_BLACK : QUIRC_PIXEL_WHITE;
+	}
 }
 
 uint8_t *quirc_begin(struct quirc *q, int *w, int *h)
@@ -1102,8 +1102,8 @@ void quirc_end(struct quirc *q)
 {
 	int i;
 
-    uint8_t threshold = otsu(q);
-    pixels_setup(q, threshold);
+	uint8_t threshold = otsu(q);
+	pixels_setup(q, threshold);
 
 	for (i = 0; i < q->h; i++)
 		finder_scan(q, i);
