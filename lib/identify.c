@@ -174,7 +174,7 @@ static void flood_fill_seed(struct quirc *q, int x, int y, int from, int to,
  * Adaptive thresholding
  */
 
-uint8_t otsu(const struct quirc *q)
+static uint8_t otsu(const struct quirc *q)
 {
 	int numPixels = q->w * q->h;
 
