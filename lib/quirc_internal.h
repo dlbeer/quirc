@@ -32,8 +32,10 @@
 #define QUIRC_PERSPECTIVE_PARAMS	8
 
 #if QUIRC_MAX_REGIONS < UINT8_MAX
+#define QUIRC_PIXEL_ALIAS_IMAGE	1
 typedef uint8_t quirc_pixel_t;
 #elif QUIRC_MAX_REGIONS < UINT16_MAX
+#define QUIRC_PIXEL_ALIAS_IMAGE	0
 typedef uint16_t quirc_pixel_t;
 #else
 #error "QUIRC_MAX_REGIONS > 65534 is not supported"

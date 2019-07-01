@@ -39,7 +39,7 @@ void quirc_destroy(struct quirc *q)
 	free(q->image);
 	/* q->pixels may alias q->image when their type representation is of the
 	   same size, so we need to be careful here to avoid a double free */
-	if (sizeof(*q->image) != sizeof(*q->pixels))
+	if (!QUIRC_PIXEL_ALIAS_IMAGE)
 		free(q->pixels);
 	free(q);
 }
@@ -80,7 +80,7 @@ int quirc_resize(struct quirc *q, int w, int h)
 	(void)memcpy(image, q->image, min);
 
 	/* alloc a new buffer for q->pixels if needed */
-	if (sizeof(*q->image) != sizeof(*q->pixels)) {
+	if (!QUIRC_PIXEL_ALIAS_IMAGE) {
 		pixels = calloc(newdim, sizeof(quirc_pixel_t));
 		if (!pixels)
 			goto fail;
@@ -91,7 +91,7 @@ int quirc_resize(struct quirc *q, int w, int h)
 	q->h = h;
 	free(q->image);
 	q->image = image;
-	if (sizeof(*q->image) != sizeof(*q->pixels)) {
+	if (!QUIRC_PIXEL_ALIAS_IMAGE) {
 		free(q->pixels);
 		q->pixels = pixels;
 	}
