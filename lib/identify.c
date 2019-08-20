@@ -98,8 +98,8 @@ static void perspective_map(const double *c,
 	double x = (c[0]*u + c[1]*v + c[2]) / den;
 	double y = (c[3]*u + c[4]*v + c[5]) / den;
 
-	ret->x = rint(x);
-	ret->y = rint(y);
+	ret->x = (int) rint(x);
+	ret->y = (int) rint(y);
 }
 
 static void perspective_unmap(const double *c,
@@ -851,8 +851,8 @@ static void rotate_capstone(struct quirc_capstone *cap,
 {
 	struct quirc_point copy[4];
 	int j;
-	int best;
-	int best_score;
+	int best = 0;
+	int best_score = INT32_MAX;
 
 	for (j = 0; j < 4; j++) {
 		struct quirc_point *p = &cap->corners[j];
