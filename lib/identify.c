@@ -216,7 +216,7 @@ static uint8_t otsu(const struct quirc *q)
 		const double m2 = ((double)sum - sumB) / q2;
 		const double m1m2 = m1 - m2;
 		const double variance = m1m2 * m1m2 * q1 * q2;
-		if (variance > max) {
+		if (variance >= max) {
 			threshold = i;
 			max = variance;
 		}
