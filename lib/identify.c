@@ -1071,7 +1071,7 @@ static void test_grouping(struct quirc *q, int i)
 
 static void pixels_setup(struct quirc *q, uint8_t threshold)
 {
-	if (sizeof(*q->image) == sizeof(*q->pixels)) {
+	if (QUIRC_PIXEL_ALIAS_IMAGE) {
 		q->pixels = (quirc_pixel_t *)q->image;
 	}
 
