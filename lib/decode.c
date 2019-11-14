@@ -536,9 +536,8 @@ static void read_bit(const struct quirc_code *code,
 	if (mask_bit(data->mask, i, j))
 		v ^= 1;
 
-	if (v)
-		if (bytepos < QUIRC_MAX_PAYLOAD)
-			ds->raw[bytepos] |= (0x80 >> bitpos);
+	if (v && bytepos < (sizeof(ds->raw) / sizeof(ds->raw[0])))
+		ds->raw[bytepos] |= (0x80 >> bitpos);
 
 	ds->data_bits++;
 }
