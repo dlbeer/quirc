@@ -537,7 +537,8 @@ static void read_bit(const struct quirc_code *code,
 		v ^= 1;
 
 	if (v)
-		ds->raw[bytepos] |= (0x80 >> bitpos);
+		if (bytepos < QUIRC_MAX_PAYLOAD)
+			ds->raw[bytepos] |= (0x80 >> bitpos);
 
 	ds->data_bits++;
 }
