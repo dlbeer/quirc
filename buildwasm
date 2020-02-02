@@ -1,0 +1,1 @@
+emcc -o quirc.html -O3 -s WASM=1 -s EXTRA_EXPORTED_RUNTIME_METHODS='["cwrap"]' lib/*.c
