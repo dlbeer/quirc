@@ -24,7 +24,7 @@ void Quirc::end(){
     quirc_end(instance);
 }
  
-const char *Quirc::strerror(Quirc::DecodeError err){
+const char *Quirc::strError(Quirc::DecodeError err){
     return quirc_strerror((quirc_decode_error_t)err);
  }
 

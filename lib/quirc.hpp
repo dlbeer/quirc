@@ -75,7 +75,7 @@ class Quirc {
 
 
         /* Return a string error message for an error code. */
-        const char *strerror(Quirc::DecodeError err);
+        const char *strError(Quirc::DecodeError err);
 
         int count();
         Quirc::Code extract(int index);
