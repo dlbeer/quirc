@@ -9,3 +9,6 @@ libquirc.so*
 .*.swp
 *~
 .DS_Store
+lib/main
+lib/main.dSYM/Contents/Info.plist
+lib/main.dSYM/Contents/Resources/DWARF/main
