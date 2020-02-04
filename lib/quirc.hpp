@@ -14,7 +14,7 @@ class Quirc {
         const char *getVersion();
         int resize(int w, int h);
 
-        uint8_t *begin(int *w, int *h);
+        uint8_t *begin();
         void end();
 
         /* This enum describes the various decoder errors which may occur. */

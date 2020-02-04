@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "quirc.hpp"
 
 Quirc::Quirc(){
@@ -16,8 +17,8 @@ int Quirc::resize(int w, int h){
     return quirc_resize(instance, w, h);
 }
 
-uint8_t *Quirc::begin(int *w, int *h){
-    return quirc_begin(instance, w, h);
+uint8_t *Quirc::begin(){
+    return quirc_begin(instance, NULL, NULL);
 }
 
 void Quirc::end(){

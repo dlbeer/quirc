@@ -22,7 +22,7 @@ int main(){
     cout << "Quirc Version: " << q.getVersion() << endl;
 
     q.resize(474, 632);
-    image = q.begin(NULL, NULL);
+    image = q.begin();
 
     infile.open("../jpeg/qr-codes-xavier.474x632.raw", ios::binary | ios::in);
     if (!infile.is_open()) {
