@@ -79,7 +79,7 @@ class Quirc {
 
         int count();
         Quirc::Code extract(int index);
-        Quirc::DecodeError decode(const Quirc::Code *code, struct Quirc::Data *data);
+        Quirc::DecodeError decode(const Quirc::Code *code, Quirc::Data *data);
 
 };
 

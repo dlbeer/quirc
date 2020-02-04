@@ -1,1 +1,1 @@
-gcc -g decode.c identify.c quirc.c quirc.cpp version_db.c main.cpp  -o main -lm -lstdc++
+gcc -O3 decode.c identify.c quirc.c quirc.cpp version_db.c main.cpp  -o main -lm -lstdc++

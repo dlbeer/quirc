@@ -1,0 +1,14 @@
+<html>
+<script src="quirc.js"></script>
+<script>
+  var quirc;
+  Module.onRuntimeInitialized = async _ => {
+    quirc = {
+      version: Module.cwrap('quirc_version', 'string', [])
+    };
+    console.log(quirc.version());
+  };
+  
+</script>
+Hello
+</html>
