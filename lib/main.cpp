@@ -32,7 +32,7 @@ int main(){
     infile.read((char*)image, 474*632);
     infile.close();
     double t0 = performanceNow();
-for (int j=0; j<10000; j++) {
+ for (int j=0; j<10000; j++) {
     q.end();
 //    cout << "Codes found: " << q.count() << endl;
 
