@@ -36,7 +36,7 @@ interface Data {
     
     [BoundsChecked] attribute char[] payload;
 
-    attribute long payload_len;
+    attribute long payloadlen;
     // ECI assignment number
     attribute long		eci;
     
@@ -53,7 +53,7 @@ interface Quirc {
     void end();
     [Const] DOMString strError(Quirc_DecodeError err);
     long count();
-    [VAlue] Code extract(long index);
+    [Value] Code extract(long index);
     Quirc_DecodeError decode(Code code, Data data);
 }
 
