@@ -1,4 +1,3 @@
-docker run -it trzeci/emscripten bash  -u $(id -u):$(id -g)  --rm
 
 docker run --rm -v `pwd`:`pwd` -u $(id -u):$(id -g) -it trzeci/emscripten bash
 

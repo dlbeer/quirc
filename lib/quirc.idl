@@ -34,7 +34,7 @@ interface Data {
     // Data payload. For the Kanji datatype, payload is encoded as
     //Shift-JIS. For all other datatypes, payload is ASCII text.
     
-    [BoundsChecked] attribute char[] payload;
+    [BoundsChecked] attribute DOMString payload;
 
     attribute long payloadlen;
     // ECI assignment number
@@ -49,11 +49,11 @@ interface Quirc {
     void Quirc();
     [Const] DOMString getVersion();
     long resize(long w, long h);
-    begin();
+    sequence<byte> begin();
     void end();
     [Const] DOMString strError(Quirc_DecodeError err);
     long count();
     [Value] Code extract(long index);
     Quirc_DecodeError decode(Code code, Data data);
-}
+};
 
