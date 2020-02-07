@@ -12,3 +12,4 @@ libquirc.so*
 lib/main
 lib/main.dSYM/Contents/Info.plist
 lib/main.dSYM/Contents/Resources/DWARF/main
+lib/parser.out
