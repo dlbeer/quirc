@@ -1,0 +1,3 @@
+python /emsdk_portable/emscripten/tag-1.39.4/tools/webidl_binder.py quirc.idl quirc-glue
+
+emcc  decode.c identify.c quirc.c quirc.cpp version_db.c quirc-glue-wrapper.cpp --post-js quirc-glue.js -o quirc.js
