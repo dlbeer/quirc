@@ -30,6 +30,14 @@ void EMSCRIPTEN_KEEPALIVE emscripten_bind_Code_set_size_1(Quirc::Code* self, int
   self->size = arg0;
 }
 
+char EMSCRIPTEN_KEEPALIVE emscripten_bind_Code_get_cell_bitmap_0(Quirc::Code* self) {
+  return self->cell_bitmap;
+}
+
+void EMSCRIPTEN_KEEPALIVE emscripten_bind_Code_set_cell_bitmap_1(Quirc::Code* self, char arg0) {
+  self->cell_bitmap = arg0;
+}
+
 void EMSCRIPTEN_KEEPALIVE emscripten_bind_Code___destroy___0(Quirc::Code* self) {
   delete self;
 }

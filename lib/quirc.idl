@@ -21,6 +21,7 @@ interface Point {
 interface Code {
     [BoundsChecked] attribute Point[] corners;
     attribute long size;
+    [BoundsChecked] attribute byte cell_bitmap;
 };
 
 [Prefix="Quirc::"]
