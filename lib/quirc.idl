@@ -11,18 +11,21 @@ enum Quirc_DecodeError {
         "Quirc::ERROR_DATA_UNDERFLOW"
 };
 
-
+[Prefix="Quirc::"]
 interface Point {
     attribute long x;
     attribute long y;
 };
 
+[Prefix="Quirc::"]
 interface Code {
     [BoundsChecked] attribute Point[] corners;
     attribute long size;
 };
 
+[Prefix="Quirc::"]
 interface Data {
+
     attribute long version;
     attribute long ecc_level;
     attribute long mask;
@@ -34,9 +37,10 @@ interface Data {
     // Data payload. For the Kanji datatype, payload is encoded as
     //Shift-JIS. For all other datatypes, payload is ASCII text.
     
-    [BoundsChecked] attribute DOMString payload;
+    //[BoundsChecked] attribute Uint8Array payload;
+    attribute DOMString payload;
 
-    attribute long payloadlen;
+    attribute long payload_len;
     // ECI assignment number
     attribute long		eci;
     
@@ -44,12 +48,15 @@ interface Data {
 
 
 
+
 interface Quirc {
+
+
 
     void Quirc();
     [Const] DOMString getVersion();
     long resize(long w, long h);
-    sequence<byte> begin();
+    VoidPtr begin();
     void end();
     [Const] DOMString strError(Quirc_DecodeError err);
     long count();

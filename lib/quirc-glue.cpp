@@ -14,23 +14,23 @@ void array_bounds_check(const int array_size, const int array_idx) {
 
 // Code
 
-Point* EMSCRIPTEN_KEEPALIVE emscripten_bind_Code_get_corners_1(Code* self, int arg0) {
+Quirc::Point* EMSCRIPTEN_KEEPALIVE emscripten_bind_Code_get_corners_1(Quirc::Code* self, int arg0) {
   return (array_bounds_check(sizeof(self->corners) / sizeof(self->corners[0]), arg0), self->corners[arg0]);
 }
 
-void EMSCRIPTEN_KEEPALIVE emscripten_bind_Code_set_corners_2(Code* self, int arg0, Point* arg1) {
+void EMSCRIPTEN_KEEPALIVE emscripten_bind_Code_set_corners_2(Quirc::Code* self, int arg0, Quirc::Point* arg1) {
   (array_bounds_check(sizeof(self->corners) / sizeof(self->corners[0]), arg0), self->corners[arg0] = arg1);
 }
 
-int EMSCRIPTEN_KEEPALIVE emscripten_bind_Code_get_size_0(Code* self) {
+int EMSCRIPTEN_KEEPALIVE emscripten_bind_Code_get_size_0(Quirc::Code* self) {
   return self->size;
 }
 
-void EMSCRIPTEN_KEEPALIVE emscripten_bind_Code_set_size_1(Code* self, int arg0) {
+void EMSCRIPTEN_KEEPALIVE emscripten_bind_Code_set_size_1(Quirc::Code* self, int arg0) {
   self->size = arg0;
 }
 
-void EMSCRIPTEN_KEEPALIVE emscripten_bind_Code___destroy___0(Code* self) {
+void EMSCRIPTEN_KEEPALIVE emscripten_bind_Code___destroy___0(Quirc::Code* self) {
   delete self;
 }
 
@@ -48,7 +48,7 @@ int EMSCRIPTEN_KEEPALIVE emscripten_bind_Quirc_resize_2(Quirc* self, int w, int 
   return self->resize(w, h);
 }
 
-char EMSCRIPTEN_KEEPALIVE emscripten_bind_Quirc_begin_0(Quirc* self) {
+void* EMSCRIPTEN_KEEPALIVE emscripten_bind_Quirc_begin_0(Quirc* self) {
   return self->begin();
 }
 
@@ -64,12 +64,12 @@ int EMSCRIPTEN_KEEPALIVE emscripten_bind_Quirc_count_0(Quirc* self) {
   return self->count();
 }
 
-Code* EMSCRIPTEN_KEEPALIVE emscripten_bind_Quirc_extract_1(Quirc* self, int index) {
-  static Code temp;
+Quirc::Code* EMSCRIPTEN_KEEPALIVE emscripten_bind_Quirc_extract_1(Quirc* self, int index) {
+  static Quirc::Code temp;
   return (temp = self->extract(index), &temp);
 }
 
-Quirc_DecodeError EMSCRIPTEN_KEEPALIVE emscripten_bind_Quirc_decode_2(Quirc* self, Code* code, Data* data) {
+Quirc_DecodeError EMSCRIPTEN_KEEPALIVE emscripten_bind_Quirc_decode_2(Quirc* self, Quirc::Code* code, Quirc::Data* data) {
   return self->decode(code, data);
 }
 
@@ -85,85 +85,85 @@ void EMSCRIPTEN_KEEPALIVE emscripten_bind_VoidPtr___destroy___0(void** self) {
 
 // Data
 
-int EMSCRIPTEN_KEEPALIVE emscripten_bind_Data_get_version_0(Data* self) {
+int EMSCRIPTEN_KEEPALIVE emscripten_bind_Data_get_version_0(Quirc::Data* self) {
   return self->version;
 }
 
-void EMSCRIPTEN_KEEPALIVE emscripten_bind_Data_set_version_1(Data* self, int arg0) {
+void EMSCRIPTEN_KEEPALIVE emscripten_bind_Data_set_version_1(Quirc::Data* self, int arg0) {
   self->version = arg0;
 }
 
-int EMSCRIPTEN_KEEPALIVE emscripten_bind_Data_get_ecc_level_0(Data* self) {
+int EMSCRIPTEN_KEEPALIVE emscripten_bind_Data_get_ecc_level_0(Quirc::Data* self) {
   return self->ecc_level;
 }
 
-void EMSCRIPTEN_KEEPALIVE emscripten_bind_Data_set_ecc_level_1(Data* self, int arg0) {
+void EMSCRIPTEN_KEEPALIVE emscripten_bind_Data_set_ecc_level_1(Quirc::Data* self, int arg0) {
   self->ecc_level = arg0;
 }
 
-int EMSCRIPTEN_KEEPALIVE emscripten_bind_Data_get_mask_0(Data* self) {
+int EMSCRIPTEN_KEEPALIVE emscripten_bind_Data_get_mask_0(Quirc::Data* self) {
   return self->mask;
 }
 
-void EMSCRIPTEN_KEEPALIVE emscripten_bind_Data_set_mask_1(Data* self, int arg0) {
+void EMSCRIPTEN_KEEPALIVE emscripten_bind_Data_set_mask_1(Quirc::Data* self, int arg0) {
   self->mask = arg0;
 }
 
-int EMSCRIPTEN_KEEPALIVE emscripten_bind_Data_get_data_type_0(Data* self) {
+int EMSCRIPTEN_KEEPALIVE emscripten_bind_Data_get_data_type_0(Quirc::Data* self) {
   return self->data_type;
 }
 
-void EMSCRIPTEN_KEEPALIVE emscripten_bind_Data_set_data_type_1(Data* self, int arg0) {
+void EMSCRIPTEN_KEEPALIVE emscripten_bind_Data_set_data_type_1(Quirc::Data* self, int arg0) {
   self->data_type = arg0;
 }
 
-char* EMSCRIPTEN_KEEPALIVE emscripten_bind_Data_get_payload_0(Data* self) {
+char* EMSCRIPTEN_KEEPALIVE emscripten_bind_Data_get_payload_0(Quirc::Data* self) {
   return self->payload;
 }
 
-void EMSCRIPTEN_KEEPALIVE emscripten_bind_Data_set_payload_1(Data* self, char* arg0) {
+void EMSCRIPTEN_KEEPALIVE emscripten_bind_Data_set_payload_1(Quirc::Data* self, char* arg0) {
   self->payload = arg0;
 }
 
-int EMSCRIPTEN_KEEPALIVE emscripten_bind_Data_get_payloadlen_0(Data* self) {
-  return self->payloadlen;
+int EMSCRIPTEN_KEEPALIVE emscripten_bind_Data_get_payload_len_0(Quirc::Data* self) {
+  return self->payload_len;
 }
 
-void EMSCRIPTEN_KEEPALIVE emscripten_bind_Data_set_payloadlen_1(Data* self, int arg0) {
-  self->payloadlen = arg0;
+void EMSCRIPTEN_KEEPALIVE emscripten_bind_Data_set_payload_len_1(Quirc::Data* self, int arg0) {
+  self->payload_len = arg0;
 }
 
-int EMSCRIPTEN_KEEPALIVE emscripten_bind_Data_get_eci_0(Data* self) {
+int EMSCRIPTEN_KEEPALIVE emscripten_bind_Data_get_eci_0(Quirc::Data* self) {
   return self->eci;
 }
 
-void EMSCRIPTEN_KEEPALIVE emscripten_bind_Data_set_eci_1(Data* self, int arg0) {
+void EMSCRIPTEN_KEEPALIVE emscripten_bind_Data_set_eci_1(Quirc::Data* self, int arg0) {
   self->eci = arg0;
 }
 
-void EMSCRIPTEN_KEEPALIVE emscripten_bind_Data___destroy___0(Data* self) {
+void EMSCRIPTEN_KEEPALIVE emscripten_bind_Data___destroy___0(Quirc::Data* self) {
   delete self;
 }
 
 // Point
 
-int EMSCRIPTEN_KEEPALIVE emscripten_bind_Point_get_x_0(Point* self) {
+int EMSCRIPTEN_KEEPALIVE emscripten_bind_Point_get_x_0(Quirc::Point* self) {
   return self->x;
 }
 
-void EMSCRIPTEN_KEEPALIVE emscripten_bind_Point_set_x_1(Point* self, int arg0) {
+void EMSCRIPTEN_KEEPALIVE emscripten_bind_Point_set_x_1(Quirc::Point* self, int arg0) {
   self->x = arg0;
 }
 
-int EMSCRIPTEN_KEEPALIVE emscripten_bind_Point_get_y_0(Point* self) {
+int EMSCRIPTEN_KEEPALIVE emscripten_bind_Point_get_y_0(Quirc::Point* self) {
   return self->y;
 }
 
-void EMSCRIPTEN_KEEPALIVE emscripten_bind_Point_set_y_1(Point* self, int arg0) {
+void EMSCRIPTEN_KEEPALIVE emscripten_bind_Point_set_y_1(Quirc::Point* self, int arg0) {
   self->y = arg0;
 }
 
-void EMSCRIPTEN_KEEPALIVE emscripten_bind_Point___destroy___0(Point* self) {
+void EMSCRIPTEN_KEEPALIVE emscripten_bind_Point___destroy___0(Quirc::Point* self) {
   delete self;
 }
 
