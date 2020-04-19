@@ -1,5 +1,9 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "quirc.hpp"
+
+
+using namespace std;
 
 Quirc::Quirc(){
     instance = quirc_new();
@@ -17,10 +21,12 @@ int Quirc::resize(int w, int h){
     return quirc_resize(instance, w, h);
 }
 
-uint8_t *Quirc::begin(){
-    return quirc_begin(instance, NULL, NULL);
-}
 
+uint8_t *Quirc::begin(){
+    uint8_t *img = quirc_begin(instance, NULL, NULL);
+    return img;
+}
+ 
 void Quirc::end(){
     quirc_end(instance);
 }
@@ -43,3 +49,9 @@ Quirc::DecodeError Quirc::decode(const Quirc::Code *code, struct Quirc::Data *da
     return (Quirc::DecodeError)quirc_decode((const quirc_code *)code, (quirc_data *)data);
 }
 
+int Quirc::getPixel(int index){
+  uint8_t *img;
+  img = begin();
+  return img[index];
+   
+}

@@ -19,9 +19,9 @@ interface Point {
 
 [Prefix="Quirc::"]
 interface Code {
-    [BoundsChecked] attribute Point[] corners;
+    [Value] attribute Point[] corners;
     attribute long size;
-    [BoundsChecked] attribute byte cell_bitmap;
+    [BoundsChecked] attribute byte[] cell_bitmap;
 };
 
 [Prefix="Quirc::"]
@@ -39,21 +39,17 @@ interface Data {
     //Shift-JIS. For all other datatypes, payload is ASCII text.
     
     //[BoundsChecked] attribute Uint8Array payload;
-    attribute DOMString payload;
+    [BoundsChecked] attribute byte[]  payload;
 
     attribute long payload_len;
     // ECI assignment number
-    attribute long		eci;
-    
+    attribute long		eci;   
 };
 
 
 
 
 interface Quirc {
-
-
-
     void Quirc();
     [Const] DOMString getVersion();
     long resize(long w, long h);
@@ -63,5 +59,6 @@ interface Quirc {
     long count();
     [Value] Code extract(long index);
     Quirc_DecodeError decode(Code code, Data data);
+    long getPixel(long index);
 };
 

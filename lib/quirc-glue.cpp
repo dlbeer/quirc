@@ -15,11 +15,11 @@ void array_bounds_check(const int array_size, const int array_idx) {
 // Code
 
 Quirc::Point* EMSCRIPTEN_KEEPALIVE emscripten_bind_Code_get_corners_1(Quirc::Code* self, int arg0) {
-  return (array_bounds_check(sizeof(self->corners) / sizeof(self->corners[0]), arg0), self->corners[arg0]);
+  return &self->corners[arg0];
 }
 
 void EMSCRIPTEN_KEEPALIVE emscripten_bind_Code_set_corners_2(Quirc::Code* self, int arg0, Quirc::Point* arg1) {
-  (array_bounds_check(sizeof(self->corners) / sizeof(self->corners[0]), arg0), self->corners[arg0] = arg1);
+  self->corners[arg0] = *arg1;
 }
 
 int EMSCRIPTEN_KEEPALIVE emscripten_bind_Code_get_size_0(Quirc::Code* self) {
@@ -30,12 +30,12 @@ void EMSCRIPTEN_KEEPALIVE emscripten_bind_Code_set_size_1(Quirc::Code* self, int
   self->size = arg0;
 }
 
-char EMSCRIPTEN_KEEPALIVE emscripten_bind_Code_get_cell_bitmap_0(Quirc::Code* self) {
-  return self->cell_bitmap;
+char EMSCRIPTEN_KEEPALIVE emscripten_bind_Code_get_cell_bitmap_1(Quirc::Code* self, int arg0) {
+  return (array_bounds_check(sizeof(self->cell_bitmap) / sizeof(self->cell_bitmap[0]), arg0), self->cell_bitmap[arg0]);
 }
 
-void EMSCRIPTEN_KEEPALIVE emscripten_bind_Code_set_cell_bitmap_1(Quirc::Code* self, char arg0) {
-  self->cell_bitmap = arg0;
+void EMSCRIPTEN_KEEPALIVE emscripten_bind_Code_set_cell_bitmap_2(Quirc::Code* self, int arg0, char arg1) {
+  (array_bounds_check(sizeof(self->cell_bitmap) / sizeof(self->cell_bitmap[0]), arg0), self->cell_bitmap[arg0] = arg1);
 }
 
 void EMSCRIPTEN_KEEPALIVE emscripten_bind_Code___destroy___0(Quirc::Code* self) {
@@ -79,6 +79,10 @@ Quirc::Code* EMSCRIPTEN_KEEPALIVE emscripten_bind_Quirc_extract_1(Quirc* self, i
 
 Quirc_DecodeError EMSCRIPTEN_KEEPALIVE emscripten_bind_Quirc_decode_2(Quirc* self, Quirc::Code* code, Quirc::Data* data) {
   return self->decode(code, data);
+}
+
+int EMSCRIPTEN_KEEPALIVE emscripten_bind_Quirc_getPixel_1(Quirc* self, int index) {
+  return self->getPixel(index);
 }
 
 void EMSCRIPTEN_KEEPALIVE emscripten_bind_Quirc___destroy___0(Quirc* self) {
@@ -125,12 +129,12 @@ void EMSCRIPTEN_KEEPALIVE emscripten_bind_Data_set_data_type_1(Quirc::Data* self
   self->data_type = arg0;
 }
 
-char* EMSCRIPTEN_KEEPALIVE emscripten_bind_Data_get_payload_0(Quirc::Data* self) {
-  return self->payload;
+char EMSCRIPTEN_KEEPALIVE emscripten_bind_Data_get_payload_1(Quirc::Data* self, int arg0) {
+  return (array_bounds_check(sizeof(self->payload) / sizeof(self->payload[0]), arg0), self->payload[arg0]);
 }
 
-void EMSCRIPTEN_KEEPALIVE emscripten_bind_Data_set_payload_1(Quirc::Data* self, char* arg0) {
-  self->payload = arg0;
+void EMSCRIPTEN_KEEPALIVE emscripten_bind_Data_set_payload_2(Quirc::Data* self, int arg0, char arg1) {
+  (array_bounds_check(sizeof(self->payload) / sizeof(self->payload[0]), arg0), self->payload[arg0] = arg1);
 }
 
 int EMSCRIPTEN_KEEPALIVE emscripten_bind_Data_get_payload_len_0(Quirc::Data* self) {

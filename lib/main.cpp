@@ -23,18 +23,21 @@ int main(){
 
     q.resize(474, 632);
     image = q.begin();
-
+  
     infile.open("../jpeg/qr-codes-xavier.474x632.raw", ios::binary | ios::in);
     if (!infile.is_open()) {
         cout << "Cannot open file!!" << endl;
         return -1;
     }
     infile.read((char*)image, 474*632);
+    printf("pixels %d %d\n", image[0], image[1]);
     infile.close();
+     printf ("getpixel: %d %d\n", q.getPixel(0), q.getPixel(1));
     double t0 = performanceNow();
-for (int j=0; j<10000; j++) {
+for (int j=0; j<1; j++) {
     q.end();
-//    cout << "Codes found: " << q.count() << endl;
+     
+    cout << "Codes found: " << q.count() << endl;
 
     for (int i=0; i<q.count(); i++){
         Quirc::Code code;
@@ -42,12 +45,16 @@ for (int j=0; j<10000; j++) {
 
         Quirc::Data data;
         Quirc::DecodeError error = q.decode(&code, &data);
-        //cout << data.payload << endl;
+        cout << "Payload " << i << ":" << data.payload << endl;
 
     }
 }
     double t1 = performanceNow();
-    cout << (t1 - t0)/10000 << "ms" << endl;
+    cout << (t1 - t0)/1000 << "ms" << endl;
+    cout << "-----" << endl; 
+    printf ("getpixel: %d %d\n", q.getPixel(0), q.getPixel(1));
+    cout << "-----" << endl;
+    
 
     return 0;
 }

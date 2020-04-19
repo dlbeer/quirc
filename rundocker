@@ -1,5 +1,4 @@
 
 docker run --rm -v `pwd`:`pwd` -u $(id -u):$(id -g) -it trzeci/emscripten bash
 
-
 python /emsdk_portable/emscripten/tag-1.39.4/tools/webidl_binder.py 

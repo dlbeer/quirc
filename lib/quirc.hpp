@@ -66,7 +66,7 @@ class Quirc {
             /* Data payload. For the Kanji datatype, payload is encoded as
             * Shift-JIS. For all other datatypes, payload is ASCII text.
             */
-            uint8_t			payload[QUIRC_MAX_PAYLOAD];
+            uint8_t		payload[QUIRC_MAX_PAYLOAD];
             int			payload_len;
 
             /* ECI assignment number */
@@ -78,6 +78,7 @@ class Quirc {
         const char *strError(Quirc::DecodeError err);
 
         int count();
+        int getPixel(int index);
         Quirc::Code extract(int index);
         Quirc::DecodeError decode(const Quirc::Code *code, Quirc::Data *data);
 
