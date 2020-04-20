@@ -38,9 +38,8 @@ interface Data {
     // Data payload. For the Kanji datatype, payload is encoded as
     //Shift-JIS. For all other datatypes, payload is ASCII text.
     
-    //[BoundsChecked] attribute Uint8Array payload;
     [BoundsChecked] attribute byte[]  payload;
-
+    
     attribute long payload_len;
     // ECI assignment number
     attribute long		eci;   
