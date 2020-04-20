@@ -47,7 +47,11 @@ interface Data {
 };
 
 
-
+[Prefix="Quirc::"]
+interface Result {
+    attribute Quirc_DecodeError error;
+    [Value] attribute Data data;
+};
 
 interface Quirc {
     void Quirc();
@@ -58,7 +62,7 @@ interface Quirc {
     [Const] DOMString strError(Quirc_DecodeError err);
     long count();
     [Value] Code extract(long index);
-    Quirc_DecodeError decode(Code code, Data data);
+    [Value] Result decode(Code code);
     long getPixel(long index);
 };
 

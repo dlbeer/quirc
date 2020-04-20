@@ -43,9 +43,8 @@ for (int j=0; j<1; j++) {
         Quirc::Code code;
         code = q.extract(i);
 
-        Quirc::Data data;
-        Quirc::DecodeError error = q.decode(&code, &data);
-        cout << "Payload " << i << ":" << data.payload << endl;
+        Quirc::Result result = q.decode(&code);
+        cout << "Payload " << i << ":" << result.error << ":" << result.data.payload << endl;
 
     }
 }

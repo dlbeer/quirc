@@ -45,8 +45,10 @@ Quirc::Code Quirc::extract(int index){
     return x;
 }
 
-Quirc::DecodeError Quirc::decode(const Quirc::Code *code, struct Quirc::Data *data){
-    return (Quirc::DecodeError)quirc_decode((const quirc_code *)code, (quirc_data *)data);
+Quirc::Result Quirc::decode(const Quirc::Code *code){
+    struct Quirc::Result result;
+    result.error = (Quirc::DecodeError)quirc_decode((const quirc_code *)code, (quirc_data *)&result.data);
+    return result;
 }
 
 int Quirc::getPixel(int index){

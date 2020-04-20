@@ -72,6 +72,10 @@ class Quirc {
             /* ECI assignment number */
             uint32_t		eci;
         };
+        struct Result {
+            DecodeError error;
+            Data data;
+        };
 
 
         /* Return a string error message for an error code. */
@@ -80,7 +84,7 @@ class Quirc {
         int count();
         int getPixel(int index);
         Quirc::Code extract(int index);
-        Quirc::DecodeError decode(const Quirc::Code *code, Quirc::Data *data);
+        Quirc::Result decode(const Quirc::Code *code);
 
 };
 
