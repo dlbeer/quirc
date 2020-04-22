@@ -5,12 +5,13 @@
 
 using namespace std;
 
-Quirc::Quirc(){
+Quirc::Quirc():imgrgba(NULL), width(0), height(0){
     instance = quirc_new();
 }
 
 Quirc::~Quirc(){
     quirc_destroy(instance);
+    free(imgrgba);
 }
 
 const char *Quirc::getVersion(){
@@ -18,16 +19,32 @@ const char *Quirc::getVersion(){
 }
 
 int Quirc::resize(int w, int h){
-    return quirc_resize(instance, w, h);
+    width = w;
+    height = h;
+    
+    int res = quirc_resize(instance, w, h);
+    if (res < 0) {
+        return res;
+    }
+    uint8_t *img = (uint8_t *)calloc(w*4, h);
+    if (img == NULL){
+        return -1;
+    }
+
+    imgrgba = img;
+    return 0;
 }
 
 
 uint8_t *Quirc::begin(){
-    uint8_t *img = quirc_begin(instance, NULL, NULL);
-    return img;
+    imggray = quirc_begin(instance, NULL, NULL);
+    return imgrgba;
 }
  
 void Quirc::end(){
+    for (int i; i < width*height*4; i+=4) {
+        imggray[i>>2] = (uint8_t) (( (imgrgba[i] * (uint16_t)66 + imgrgba[i + 1] * (uint16_t)129 + imgrgba[i + 2] * (uint16_t)25) + (uint16_t)4096) >> 8);
+    }
     quirc_end(instance);
 }
  
@@ -52,8 +69,6 @@ Quirc::Result Quirc::decode(const Quirc::Code *code){
 }
 
 int Quirc::getPixel(int index){
-  uint8_t *img;
-  img = begin();
-  return img[index];
+  return imggray[index];
    
 }

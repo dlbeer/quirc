@@ -8,16 +8,11 @@
 class Quirc {
     private:
         struct quirc *instance;
+        int width, height;  
+        uint8_t *imgrgba; 
+        uint8_t *imggray;     
     public:
-        Quirc();
-        ~Quirc();
-        const char *getVersion();
-        int resize(int w, int h);
-
-        uint8_t *begin();
-        void end();
-
-        /* This enum describes the various decoder errors which may occur. */
+         /* This enum describes the various decoder errors which may occur. */
         enum DecodeError {
             SUCCESS = 0,
             ERROR_INVALID_GRID_SIZE,
@@ -76,10 +71,16 @@ class Quirc {
             DecodeError error;
             Data data;
         };
-
-
+   
+        Quirc();
+        ~Quirc();
+        const char *getVersion();
         /* Return a string error message for an error code. */
         const char *strError(Quirc::DecodeError err);
+
+        int resize(int w, int h);
+        uint8_t *begin();
+        void end();
 
         int count();
         int getPixel(int index);
