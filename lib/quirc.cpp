@@ -19,6 +19,10 @@ const char *Quirc::getVersion(){
 }
 
 int Quirc::resize(int w, int h){
+    if ((width == w) && (height == h)) {
+        return 0;
+    }
+    
     width = w;
     height = h;
     
@@ -30,7 +34,7 @@ int Quirc::resize(int w, int h){
     if (img == NULL){
         return -1;
     }
-
+    free(imgrgba);
     imgrgba = img;
     return 0;
 }
