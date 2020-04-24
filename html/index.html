@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Hello!</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <!-- import the webpage's stylesheet -->
+    <link rel="stylesheet" href="/style.css">
+    
+    <!-- import the webpage's javascript file -->
+    <script src="quirc.js"></script>
+    <script>
+      
+    Module.onRuntimeInitialized = async _ => {
+      
+      var img = new Image();
+      img.src = "qr-codes-xavier.jpg";
+      img.onload = function(){
+        var canvas = document.getElementById('myCanvas');
+        var context = canvas.getContext('2d');
+        var imageWidth = img.width;
+        var imageHeight = img.height;
+        context.drawImage(img, 0, 0);
+  
+        var imageData = context.getImageData(0, 0, imageWidth, imageHeight);
+        const grayData = []
+        const d = imageData.data;
+        for (var i = 0, j = 0; i < d.length; i += 4, j++) {
+          grayData[j] = (d[i] * 66 + d[i + 1] * 129 + d[i + 2] * 25 + 4096) >> 8;
+        }
+ 
+        var quirc = new Module.Quirc();
+        console.log(quirc.getVersion());
+        quirc.resize(474, 632);
+        const p = quirc.begin();
+        Module.HEAPU8.set(d, p.ptr);
+        for (var i = 0; i < 10; i ++) {
+          console.log(grayData[i] + "," + quirc.getPixel(i));  
+        }
+        var t0 = performance.now();
+        quirc.end();
+        var t1 = performance.now();
+        
+        var c = quirc.count();
+        for (var i = 0; i < quirc.count(); i++) {
+          var code = quirc.extract(i);
+          var result = quirc.decode(code);
+          
+        }
+        var t2 = performance.now();
+        console.log("t1: " + (t1 - t0) + " t2:" + (t2-t0));
+      }
+    }  
+   
+    </script>
+  </head>  
+  <body>
+    <h1>Hi there!</h1>
+    
+    <p>
+      I'm your cool new webpage. Made with <a href="https://glitch.com">Glitch</a>!
+    
+    </p>
+    <canvas id="myCanvas" width="474" height="632"></canvas>
+    
+ 
+
+  </body>
+</html>
