@@ -16,3 +16,4 @@ lib/parser.out
 lib/WebIDLGrammar.pkl
 lib/quirc.wasm
 lib/quirc.js
+lib/package-lock.json
