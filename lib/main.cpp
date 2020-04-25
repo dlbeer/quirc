@@ -17,6 +17,7 @@ int main(){
 
     ifstream infile;
     uint8_t *image;
+    uint8_t im[474*632];
    
     Quirc q;
     cout << "Quirc Version: " << q.getVersion() << endl;
@@ -29,10 +30,17 @@ int main(){
         cout << "Cannot open file!!" << endl;
         return -1;
     }
-    infile.read((char*)image, 474*632);
+    infile.read((char*)im, 474*632);
+    for (int i = 0; i < 474*632; i++){
+        image[4*i] = im[i];
+        image[4*i+1] = im[i];
+        image[4*i+2] = im[i];
+    }
     printf("pixels %d %d\n", image[0], image[1]);
+
     infile.close();
      printf ("getpixel: %d %d\n", q.getPixel(0), q.getPixel(1));
+     Quirc::Result result[4];
     double t0 = performanceNow();
 for (int j=0; j<1; j++) {
     q.end();
@@ -43,13 +51,13 @@ for (int j=0; j<1; j++) {
         Quirc::Code code;
         code = q.extract(i);
 
-        Quirc::Result result = q.decode(&code);
-        cout << "Payload " << i << ":" << result.error << ":" << result.data.payload << endl;
+        result[i] = q.decode(&code);
 
     }
 }
     double t1 = performanceNow();
-    cout << (t1 - t0)/1000 << "ms" << endl;
+    cout << "Payload " << 0 << ":" << result[3].error << ":" << result[3].data.payload << endl;
+    cout << (t1 - t0) << "ms" << endl;
     cout << "-----" << endl; 
     printf ("getpixel: %d %d\n", q.getPixel(0), q.getPixel(1));
     cout << "-----" << endl;
