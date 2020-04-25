@@ -17,3 +17,5 @@ lib/WebIDLGrammar.pkl
 lib/quirc.wasm
 lib/quirc.js
 lib/package-lock.json
+lib/quirc-glue.js
+lib/quirc-glue.cpp

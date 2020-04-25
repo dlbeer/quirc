@@ -84,6 +84,7 @@ class Quirc {
 
         int count();
         int getPixel(int index);
+        int getPixelRGBA(int index);
         Quirc::Code extract(int index);
         Quirc::Result decode(const Quirc::Code *code);
 

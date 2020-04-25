@@ -108,6 +108,10 @@ int EMSCRIPTEN_KEEPALIVE emscripten_bind_Quirc_getPixel_1(Quirc* self, int index
   return self->getPixel(index);
 }
 
+int EMSCRIPTEN_KEEPALIVE emscripten_bind_Quirc_getPixelRGBA_1(Quirc* self, int index) {
+  return self->getPixelRGBA(index);
+}
+
 void EMSCRIPTEN_KEEPALIVE emscripten_bind_Quirc___destroy___0(Quirc* self) {
   delete self;
 }

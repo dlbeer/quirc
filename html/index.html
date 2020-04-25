@@ -46,12 +46,13 @@
         quirc.resize(474, 632);
         const p = quirc.begin();
         Module.HEAP8.set(d, p.ptr);
+        var t0 = performance.now();
+        quirc.end();
+
+        var t1 = performance.now();
         for (var i = 0; i < 10; i ++) {
           console.log(grayData[i] + "," + quirc.getPixel(i));  
         }
-        var t0 = performance.now();
-        quirc.end();
-        var t1 = performance.now();
         
         var c = quirc.count();
         for (var i = 0; i < quirc.count(); i++) {

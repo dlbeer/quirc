@@ -76,3 +76,8 @@ int Quirc::getPixel(int index){
   return imggray[index];
    
 }
+
+int Quirc::getPixelRGBA(int index){
+  return imgrgba[index];
+   
+}

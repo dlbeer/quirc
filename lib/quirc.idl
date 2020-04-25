@@ -63,5 +63,6 @@ interface Quirc {
     [Value] Code extract(long index);
     [Value] Result decode(Code code);
     long getPixel(long index);
+    long getPixelRGBA(long index);
 };
 
