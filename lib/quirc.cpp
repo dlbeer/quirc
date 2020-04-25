@@ -30,7 +30,6 @@ int Quirc::resize(int w, int h){
     if (res < 0) {
         return res;
     }
-    return res;
     uint8_t *img = (uint8_t *)calloc(w*4, h);
     if (img == NULL){
         return -1;
@@ -43,14 +42,13 @@ int Quirc::resize(int w, int h){
 
 uint8_t *Quirc::begin(){
     imggray = quirc_begin(instance, NULL, NULL);
-    //return imgrgba;
-    return imggray;
+    return imgrgba;
 }
  
 void Quirc::end(){
-    // for (int i; i < width*height*4; i+=4) {
-    //     imggray[i>>2] = (uint8_t) (( (imgrgba[i] * (uint16_t)66 + imgrgba[i + 1] * (uint16_t)129 + imgrgba[i + 2] * (uint16_t)25) + (uint16_t)4096) >> 8);
-    // }
+    for (int i = 0; i < (width*height*4); i+=4) {
+        imggray[i>>2] = (uint8_t) (( (imgrgba[i] * (uint16_t)66 + imgrgba[i + 1] * (uint16_t)129 + imgrgba[i + 2] * (uint16_t)25) + (uint16_t)4096) >> 8);
+    }
     quirc_end(instance);
 }
  

@@ -45,16 +45,18 @@
         console.log(quirc.getVersion());
         quirc.resize(474, 632);
         const p = quirc.begin();
-        Module.HEAP8.set(d, p.ptr);
+        Module.HEAPU8.set(d, p.ptr);
         var t0 = performance.now();
         quirc.end();
 
         var t1 = performance.now();
         for (var i = 0; i < 10; i ++) {
-          console.log(grayData[i] + "," + quirc.getPixel(i));  
+          console.log("gray " + grayData[i] + "," + quirc.getPixel(i));
+          console.log("rgba " + d[i] + "," + quirc.getPixelRGBA(i));  
         }
         
         var c = quirc.count();
+        console.log("Count: " +c);
         for (var i = 0; i < quirc.count(); i++) {
           var code = quirc.extract(i);
           var result = quirc.decode(code);
