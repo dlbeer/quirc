@@ -19,9 +19,8 @@
       }      
     </style>
 
-    
-    <!-- import the webpage's javascript file -->
     <script src="quirc.js"></script>
+
     <script>
       
     Module.onRuntimeInitialized = async _ => {
@@ -46,7 +45,7 @@
         console.log(quirc.getVersion());
         quirc.resize(474, 632);
         const p = quirc.begin();
-        Module.HEAPU8.set(d, p.ptr);
+        Module.HEAP8.set(d, p.ptr);
         for (var i = 0; i < 10; i ++) {
           console.log(grayData[i] + "," + quirc.getPixel(i));  
         }
@@ -68,15 +67,6 @@
     </script>
   </head>  
   <body>
-    <h1>Hi there!</h1>
-    
-    <p>
-      I'm your cool new webpage. Made with <a href="https://glitch.com">Glitch</a>!
-    
-    </p>
     <canvas id="myCanvas" width="474" height="632"></canvas>
-    
- 
-
   </body>
 </html>
