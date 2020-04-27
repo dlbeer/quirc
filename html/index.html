@@ -22,7 +22,64 @@
     <script src="quirc.js"></script>
 
     <script>
+    class QuircJS{
+      constructor(){
+        this.quirc = new Module.Quirc();
+        this.code = [];
+        this.result = [];
+        this._data = [];
+      }
+      detect(imageData){
+        this.quirc.resize(imageData.width, imageData.height);
+        const buf = this.quirc.begin();
+        Module.HEAPU8.set(imageData.data, buf.ptr);
+        this.quirc.end();
+        let count = this.quirc.count();
+        for (let i = 0; i < count; i++){
+          let c = this.quirc.extract(i); 
+          let result = this.quirc.decode(c);
+          let d = result.data;
+          let payload = this._data2payload(d);
+          let corners = this._code2corners(c);
+          let p = {corners : corners ,error : result.error, version: d.version, ecc_level : d.ecc_level, mask : d.mask, data_type : d.data_type, payload : payload, eci : d.eci };
+          this._data.push(p); 
+        }
+        return count;
+      }
+      count(){
+        return this.quirc.count();
+      }
+
+      version(){
+        return this.quirc.getVersion();
+      }
+
+      getData(num){
+        if (num < 0 || num >= this.count()){
+          return -1;
+        }
+        return this._data[num];
+      }
+
+      _code2corners(code){
+        let c = [];
+        for (let i = 0; i < 4; i++){
+          let corner = {x : code.get_corners(i).x, y : code.get_corners(i).y} 
+          c.push(corner);
+        }
+        return c;
+      }
+      _data2payload(data){
+        let len = data.payload_len;
+        let str = "";
+        for (let i = 0; i < len; i++) {
+          str += String.fromCharCode(data.get_payload(i));
+        }
+        return str;
+      }
       
+    }  
+
     Module.onRuntimeInitialized = async _ => {
       
       var img = new Image();
@@ -35,38 +92,40 @@
         context.drawImage(img, 0, 0);
   
         var imageData = context.getImageData(0, 0, imageWidth, imageHeight);
-        const grayData = []
-        const d = imageData.data;
-        for (var i = 0, j = 0; i < d.length; i += 4, j++) {
-          grayData[j] = (d[i] * 66 + d[i + 1] * 129 + d[i + 2] * 25 + 4096) >> 8;
-        }
- 
-        var quirc = new Module.Quirc();
-        console.log(quirc.getVersion());
-        quirc.resize(474, 632);
-        const p = quirc.begin();
-        Module.HEAPU8.set(d, p.ptr);
-        var t0 = performance.now();
-        quirc.end();
 
-        var t1 = performance.now();
-        for (var i = 0; i < 10; i ++) {
-          console.log("gray " + grayData[i] + "," + quirc.getPixel(i));
-          console.log("rgba " + d[i] + "," + quirc.getPixelRGBA(i));  
+        let quirc = new QuircJS();
+        console.log("Version: " + quirc.version());
+        let t0 = performance.now();
+        let count = quirc.detect(imageData);
+        let t1 = performance.now();
+        console.log("t1: " + (t1 - t0));
+
+        console.log("Count: " + count);
+        for (let i = 0; i < count; i++) {
+          let data = quirc.getData(i);
+          console.log(i + ":" + data.payload);
+          drawBoundingBox(data.corners);
         }
-        
-        var c = quirc.count();
-        console.log("Count: " +c);
-        for (var i = 0; i < quirc.count(); i++) {
-          var code = quirc.extract(i);
-          var result = quirc.decode(code);
-          
+        function drawBoundingBox(corners){
+          drawLine(corners[0], corners[1], "#FF3B58");
+          drawLine(corners[1], corners[2], "#FF3B58");
+          drawLine(corners[2], corners[3], "#FF3B58");
+          drawLine(corners[3], corners[0], "#FF3B58");
         }
-        var t2 = performance.now();
-        console.log("t1: " + (t1 - t0) + " t2:" + (t2-t0));
+        function drawLine(begin, end, color) {
+          context.beginPath();
+          context.moveTo(begin.x, begin.y);
+          context.lineTo(end.x, end.y);
+          context.lineWidth = 4;
+          context.strokeStyle = color;
+          context.stroke();
+        }
+
       }
+
     }  
-   
+
+
     </script>
   </head>  
   <body>
