@@ -81,6 +81,7 @@ struct quirc {
 	quirc_pixel_t		*pixels;
 	int			w;
 	int			h;
+	int			quirc_owns_buffers;
 
 	int			num_regions;
 	struct quirc_region	regions[QUIRC_MAX_REGIONS];

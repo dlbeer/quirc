@@ -31,11 +31,16 @@ struct quirc *quirc_new(void)
 		return NULL;
 
 	memset(q, 0, sizeof(*q));
+	q->quirc_owns_buffers = 1;
 	return q;
 }
 
 void quirc_destroy(struct quirc *q)
 {
+	if (!q->quirc_owns_buffers) {
+		return;
+	}
+
 	free(q->image);
 	/* q->pixels may alias q->image when their type representation is of the
 	   same size, so we need to be careful here to avoid a double free */
@@ -44,10 +49,32 @@ void quirc_destroy(struct quirc *q)
 	free(q);
 }
 
+
+int quirc_init(struct quirc* q, int w, int h, void* image)
+{
+	if (!q || !image || q->quirc_owns_buffers || !QUIRC_PIXEL_ALIAS_IMAGE) {
+		return -1;
+	}
+
+	memset(q, 0, sizeof(*q));
+	q->w = w;
+	q->h = h;
+	q->image = image;
+
+	return 0;
+}
+
+
 int quirc_resize(struct quirc *q, int w, int h)
 {
 	uint8_t		*image  = NULL;
 	quirc_pixel_t	*pixels = NULL;
+
+	/* Restrict use of this function when quirc_init() was used */
+	if (!q->quirc_owns_buffers) {
+		// don't 'goto fail' here since we don't want to free the user buffers
+		return -1;
+	}
 
 	/*
 	 * XXX: w and h should be size_t (or at least unsigned) as negatives
