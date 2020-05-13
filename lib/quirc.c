@@ -52,15 +52,19 @@ void quirc_destroy(struct quirc *q)
 
 int quirc_init(struct quirc* q, int w, int h, void* image)
 {
-	if (!q || !image || q->quirc_owns_buffers || !QUIRC_PIXEL_ALIAS_IMAGE) {
+	if (!q || !image || q->quirc_owns_buffers || !QUIRC_PIXEL_ALIAS_IMAGE)
 		return -1;
-	}
+
+	/*
+	 * XXX: Same sanity check as in quirc_resize() for the same reasons.
+	 */
+	if (w < 0 || h < 0)
+		return -1;
 
 	memset(q, 0, sizeof(*q));
 	q->w = w;
 	q->h = h;
 	q->image = image;
-
 	return 0;
 }
 
@@ -71,10 +75,9 @@ int quirc_resize(struct quirc *q, int w, int h)
 	quirc_pixel_t	*pixels = NULL;
 
 	/* Restrict use of this function when quirc_init() was used */
-	if (!q->quirc_owns_buffers) {
+	if (!q->quirc_owns_buffers)
 		// don't 'goto fail' here since we don't want to free the user buffers
 		return -1;
-	}
 
 	/*
 	 * XXX: w and h should be size_t (or at least unsigned) as negatives
