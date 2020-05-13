@@ -37,9 +37,8 @@ struct quirc *quirc_new(void)
 
 void quirc_destroy(struct quirc *q)
 {
-	if (!q->quirc_owns_buffers) {
+	if (!q->quirc_owns_buffers)
 		return;
-	}
 
 	free(q->image);
 	/* q->pixels may alias q->image when their type representation is of the
