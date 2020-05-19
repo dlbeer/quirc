@@ -110,3 +110,4 @@ clean:
 	rm -f js/quirc.js
 	rm -f js/quirc.wasm
 	rm -f parser.out
+	
