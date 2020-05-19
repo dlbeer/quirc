@@ -3,7 +3,7 @@
 #define _QUIRC_HPP
 
 #include <stdint.h>
-#include "quirc.h"
+#include "../lib/quirc.h"
 
 class Quirc {
     private:

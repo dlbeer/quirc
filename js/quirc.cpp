@@ -3,8 +3,6 @@
 #include "quirc.hpp"
 
 
-using namespace std;
-
 Quirc::Quirc():imgrgba(NULL), width(0), height(0){
     instance = quirc_new();
 }

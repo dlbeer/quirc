@@ -1,39 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Hello!</title>
+    <title>QuircJS Demo</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    
-    <!-- import the webpage's stylesheet -->
-    <style>
-      body {
-        font-family: helvetica, arial, sans-serif;
-        margin: 2em;
-      }
-
-      h1 {
-        font-style: italic;
-        color: #373fff;
-      }      
-    </style>
-
+  
     <script src="quirc.js"></script>
     <script src="QuircQR.js"></script>
 
     <script>
     Module.onRuntimeInitialized = async _ => {      
       var img = new Image();
-      img.src = "qr-codes-xavier.jpg";
+      img.src = "QRCode.jpg";
       img.onload = function(){
         var canvas = document.getElementById('myCanvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
         var context = canvas.getContext('2d');
-        var imageWidth = img.width;
-        var imageHeight = img.height;
         context.drawImage(img, 0, 0);
+        context.font = "30px Arial";
+        context.fillStyle = "red";
+
   
-        var imageData = context.getImageData(0, 0, imageWidth, imageHeight);
+        var imageData = context.getImageData(0, 0, img.width, img.height);
 
         let quirc = new QuircQR();
         console.log("Version: " + quirc.version());
@@ -47,6 +37,7 @@
           let data = quirc.getData(i);
           console.log(i + ":" + data.payload);
           drawBoundingBox(data.corners);
+          context.fillText("QR Code: " + data.payload, 10, 50); 
         }
         function drawBoundingBox(corners){
           drawLine(corners[0], corners[1], "#FF3B58");
@@ -64,11 +55,9 @@
         }
       }
     }  
-
-
     </script>
   </head>  
   <body>
-    <canvas id="myCanvas" width="474" height="632"></canvas>
+    <canvas id="myCanvas"></canvas>
   </body>
 </html>

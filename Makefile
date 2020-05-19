@@ -14,6 +14,8 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 CC ?= gcc
+EMCC ?= emcc
+PYTHON ?= python
 PREFIX ?= /usr/local
 SDL_CFLAGS != pkg-config --cflags sdl
 SDL_LIBS != pkg-config --libs sdl
@@ -34,7 +36,23 @@ DEMO_OBJ = \
     demo/dthash.o \
     demo/demoutil.o
 
+WASM_SRC = \
+	js/quirc.cpp \
+	lib/decode.c \
+	lib/identify.c \
+	lib/quirc.c \
+	lib/version_db.c \
+	js/quirc-glue-wrapper.cpp  
+
+WEB_IDL_BINDER_PY = $(shell dirname `which emcc`)/tools/webidl_binder.py
+EMCCFLAGS ?= -O3
+
+
 all: libquirc.so qrtest inspect quirc-demo quirc-scanner
+
+quirc.js: js/quirc.idl $(WASM_SRC)
+	$(PYTHON) $(WEB_IDL_BINDER_PY) js/quirc.idl js/quirc-glue
+	$(EMCC) $(EMCCFLAGS) $(WASM_SRC) --post-js js/quirc-glue.js -o js/quirc.js
 
 qrtest: tests/dbgutil.o tests/qrtest.o libquirc.a
 	$(CC) -o $@ tests/dbgutil.o tests/qrtest.o libquirc.a $(LDFLAGS) -lm -ljpeg -lpng
@@ -86,3 +104,9 @@ clean:
 	rm -f inspect
 	rm -f quirc-demo
 	rm -f quirc-scanner
+	rm -f WebIDLGrammar.pkl
+	rm -f js/quirc-glue.cpp
+	rm -f js/quirc-glue.js
+	rm -f js/quirc.js
+	rm -f js/quirc.wasm
+	rm -f parser.out
