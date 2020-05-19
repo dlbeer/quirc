@@ -9,6 +9,7 @@ libquirc.so*
 .*.swp
 *~
 .DS_Store
+.vscode
 parser.out
 WebIDLGrammar.pkl
 js/quirc.wasm
