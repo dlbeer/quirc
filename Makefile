@@ -42,7 +42,7 @@ WASM_SRC = \
 	lib/identify.c \
 	lib/quirc.c \
 	lib/version_db.c \
-	js/quirc-glue-wrapper.cpp  
+	js/quirc-glue-wrapper.cpp
 
 WEB_IDL_BINDER_PY = $(shell dirname `which emcc`)/tools/webidl_binder.py
 EMCCFLAGS ?= -O3
