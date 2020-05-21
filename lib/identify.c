@@ -1003,10 +1003,11 @@ static void test_neighbours(struct quirc *q, int i,
 		for (k = 0; k < vlist->count; k++) {
 			const struct neighbour *hn = &hlist->n[j];
 			const struct neighbour *vn = &vlist->n[k];
-			double score = fabs(1.0 - hn->distance / vn->distance);
+			double squareness = fabs(1.0 - hn->distance / vn->distance);
 
-			if (score > 2.5)
+			if (squareness > 0.2)
 				continue;
+			double score = hn->distance;
 
 			if (best_h < 0 || score < best_score) {
 				best_h = hn->index;
