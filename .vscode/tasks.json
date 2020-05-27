@@ -1,0 +1,52 @@
+{
+    "version": "2.0.0",
+    "command": "make",    
+    "type": "shell",
+    "presentation": {
+        "reveal": "always"
+    },
+    // Use the standard less compilation problem matcher.
+    "problemMatcher": {
+        "owner": "cpp",
+        "fileLocation": ["relative", "${workspaceRoot}"],
+        "pattern": {
+            "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "severity": 4,
+            "message": 5
+        }
+    },
+
+    "tasks": [
+        {
+            "label": "Debug build",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+
+            "options": {
+                "env": {
+                    "CFLAGS": "-g -Wall -fPIC",
+                }
+            },    
+            "args": ["all"],
+        },
+        {
+            "label": "Release build",
+
+            "options": {
+                "env": {
+                    "CFLAGS": "-O3 -Wall -fPIC",
+                }
+            },    
+            "args": ["all"] 
+        },
+        {
+            "label": "Clean",
+            "args": ["clean"] 
+        },       
+    ]
+}
