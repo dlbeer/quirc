@@ -9,7 +9,7 @@
         "type": "cppdbg",
         "request": "launch",
         "program": "${workspaceFolder}/inspect",
-        "args": ["../Downloads/img3.jpg"],
+        "args": ["../../Downloads/img3-3.jpg"],
         "stopAtEntry": false,
         "cwd": "${workspaceFolder}",
         "environment": [],

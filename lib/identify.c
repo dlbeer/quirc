@@ -553,7 +553,8 @@ static int timing_scan(const struct quirc *q,
 	int nondom_step;
 	int a = 0;
 	int i;
-	int run_length = 0;
+	int zero_run_length = 0;
+	int non_zero_run_length = 0;
 	int count = 0;
 
 	if (p0->x < 0 || p0->y < 0 || p0->x >= q->w || p0->y >= q->h)
@@ -599,11 +600,14 @@ static int timing_scan(const struct quirc *q,
 		pixel = q->pixels[y * q->w + x];
 
 		if (pixel) {
-			if (run_length >= 2)
+			non_zero_run_length++;
+			if ((zero_run_length >= 2) && (non_zero_run_length >= 2)) {
 				count++;
-			run_length = 0;
+				zero_run_length = 0;
+			}
 		} else {
-			run_length++;
+			zero_run_length++;
+			non_zero_run_length = 0;
 		}
 
 		a += n;
@@ -615,6 +619,32 @@ static int timing_scan(const struct quirc *q,
 	}
 
 	return count;
+}
+
+static double distance(struct quirc_point a, struct quirc_point b)
+{
+	return sqrt((a.x - b.x)*(a.x - b.x) +  (a.y - b.y)*(a.y - b.y));	
+}
+
+static void measure_grid_size(struct quirc *q, int index)
+{
+	struct quirc_grid *qr = &q->grids[index];
+
+	struct quirc_capstone *a = &(q->capstones[qr->caps[0]]);
+	struct quirc_capstone *b = &(q->capstones[qr->caps[1]]);
+	struct quirc_capstone *c = &(q->capstones[qr->caps[2]]);
+
+	double ab = distance(b->corners[0], a->corners[3]);
+	double capstone_ab_size = (distance(b->corners[0], b->corners[3]) + distance(a->corners[0], a->corners[3]))/2.0;
+	double ver_grid = 7.0 * ab / capstone_ab_size;
+
+	double bc = distance(b->corners[0], c->corners[1]);
+	double capstone_bc_size = (distance(b->corners[0], b->corners[1]) + distance(c->corners[0], c->corners[1]))/2.0;
+	double hor_grid = 7.0 * bc / capstone_bc_size;
+	
+	double grid_size_estimate = (ver_grid + hor_grid) / 2;
+	
+	qr->grid_size =  4*((int)(grid_size_estimate - 17.0 + 2.0) / 4) + 17;
 }
 
 /* Try the measure the timing pattern for a given QR code. This does
@@ -641,13 +671,13 @@ static int measure_timing_pattern(struct quirc *q, int index)
 
 		perspective_map(cap->c, us[i], vs[i], &qr->tpep[i]);
 	}
+	
+	int hscan = timing_scan(q, &qr->tpep[1], &qr->tpep[2]);
+	int vscan = timing_scan(q, &qr->tpep[1], &qr->tpep[0]);
 
-	qr->hscan = timing_scan(q, &qr->tpep[1], &qr->tpep[2]);
-	qr->vscan = timing_scan(q, &qr->tpep[1], &qr->tpep[0]);
-
-	scan = qr->hscan;
-	if (qr->vscan > scan)
-		scan = qr->vscan;
+	scan = hscan;
+	if (vscan > scan)
+		scan = vscan;
 
 	/* If neither scan worked, we can't go any further. */
 	if (scan < 0)
@@ -925,9 +955,10 @@ static void record_qr_grid(struct quirc *q, int a, int b, int c)
 	/* Check the timing pattern. This doesn't require a perspective
 	 * transform.
 	 */
-	if (measure_timing_pattern(q, qr_index) < 0)
-		goto fail;
-
+	//if (measure_timing_pattern(q, qr_index) < 0)
+	//	goto fail;
+	
+	measure_grid_size(q, qr_index);
 	/* Make an estimate based for the alignment pattern based on extending
 	 * lines from capstones A and C.
 	 */
@@ -994,31 +1025,16 @@ static void test_neighbours(struct quirc *q, int i,
 			    const struct neighbour_list *hlist,
 			    const struct neighbour_list *vlist)
 {
-	int j, k;
-	double best_score = 0.0;
-	int best_h = -1, best_v = -1;
-
 	/* Test each possible grouping */
-	for (j = 0; j < hlist->count; j++)
-		for (k = 0; k < vlist->count; k++) {
-			const struct neighbour *hn = &hlist->n[j];
+	for (int j = 0; j < hlist->count; j++) {
+		const struct neighbour *hn = &hlist->n[j];
+		for (int k = 0; k < vlist->count; k++) {
 			const struct neighbour *vn = &vlist->n[k];
-			double score = fabs(1.0 - hn->distance / vn->distance);
-
-			if (score > 2.5)
-				continue;
-
-			if (best_h < 0 || score < best_score) {
-				best_h = hn->index;
-				best_v = vn->index;
-				best_score = score;
-			}
+			double squareness = fabs(1.0 - hn->distance / vn->distance);
+			if (squareness < 0.2)
+				record_qr_grid(q, hn->index, i, vn->index);
 		}
-
-	if (best_h < 0 || best_v < 0)
-		return;
-
-	record_qr_grid(q, best_h, i, best_v);
+	}
 }
 
 static void test_grouping(struct quirc *q, int i)
@@ -1027,9 +1043,6 @@ static void test_grouping(struct quirc *q, int i)
 	int j;
 	struct neighbour_list hlist;
 	struct neighbour_list vlist;
-
-	if (c1->qr_grid >= 0)
-		return;
 
 	hlist.count = 0;
 	vlist.count = 0;
@@ -1041,7 +1054,7 @@ static void test_grouping(struct quirc *q, int i)
 		struct quirc_capstone *c2 = &q->capstones[j];
 		double u, v;
 
-		if (i == j || c2->qr_grid >= 0)
+		if (i == j)
 			continue;
 
 		perspective_unmap(c1->c, &c2->center, &u, &v);
