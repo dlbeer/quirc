@@ -1,6 +1,0 @@
-{
-    "files.associations": {
-        "*.idl": "cpp"
-    },
-    "C_Cpp.errorSquiggles": "Enabled"
-}
