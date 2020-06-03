@@ -31,13 +31,13 @@ struct quirc *quirc_new(void)
 		return NULL;
 
 	memset(q, 0, sizeof(*q));
-	q->quirc_owns_buffers = 1;
+	q->need_to_free = 1;
 	return q;
 }
 
 void quirc_destroy(struct quirc *q)
 {
-	if (!q->quirc_owns_buffers)
+	if (!q->need_to_free)
 		return;
 
 	free(q->image);
@@ -48,14 +48,13 @@ void quirc_destroy(struct quirc *q)
 	free(q);
 }
 
-
-int quirc_init(struct quirc* q, int w, int h, void* image)
+int quirc_init(struct quirc *q, int w, int h, uint8_t *image)
 {
-	if (!q || !image || q->quirc_owns_buffers || !QUIRC_PIXEL_ALIAS_IMAGE)
+	if (!q || !image || !QUIRC_PIXEL_ALIAS_IMAGE)
 		return -1;
 
 	/*
-	 * XXX: Same sanity check as in quirc_resize() for the same reasons.
+	 * Same sanity check as in quirc_resize() for the same reasons.
 	 */
 	if (w < 0 || h < 0)
 		return -1;
@@ -67,16 +66,22 @@ int quirc_init(struct quirc* q, int w, int h, void* image)
 	return 0;
 }
 
-
 int quirc_resize(struct quirc *q, int w, int h)
 {
 	uint8_t		*image  = NULL;
 	quirc_pixel_t	*pixels = NULL;
 
 	/* Restrict use of this function when quirc_init() was used */
-	if (!q->quirc_owns_buffers)
-		// don't 'goto fail' here since we don't want to free the user buffers
-		return -1;
+	if (!q->need_to_free) {
+		/*
+		 * Just update the internal sizes and assume the caller knows what they
+		 * are doing and provided a big enough image buffer in quirc_init().
+		 */
+		q->w = w;
+		q->h = h;
+
+		return 0;
+	}
 
 	/*
 	 * XXX: w and h should be size_t (or at least unsigned) as negatives
