@@ -71,7 +71,6 @@ int quirc_resize(struct quirc *q, int w, int h)
 	uint8_t		*image  = NULL;
 	quirc_pixel_t	*pixels = NULL;
 
-	/* Restrict use of this function when quirc_init() was used */
 	if (!q->need_to_free) {
 		/*
 		 * Just update the internal sizes and assume the caller knows what they
