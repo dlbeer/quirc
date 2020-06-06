@@ -20,7 +20,7 @@
 
 const char *quirc_version(void)
 {
-	return "1.0";
+	return "1.1";
 }
 
 struct quirc *quirc_new(void)
