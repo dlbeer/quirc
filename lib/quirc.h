@@ -39,7 +39,7 @@ struct quirc *quirc_new(void);
  * to use a memory buffer that is statically allocated or allocated with
  * something other than malloc().
  *
- * Note that QUIRC_PIXEL_ALIAS_IMAGE must be true (1) to us this constructor.
+ * Note that QUIRC_PIXEL_ALIAS_IMAGE must be true (1) to use this constructor.
  */
 int quirc_init(struct quirc *q, int w, int h, uint8_t *image);
 
