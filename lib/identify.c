@@ -126,49 +126,88 @@ static void perspective_unmap(const double *c,
 
 typedef void (*span_func_t)(void *user_data, int y, int left, int right);
 
-static void flood_fill_seed(struct quirc *q, int x, int y, int from, int to,
-			    span_func_t func, void *user_data,
-			    int depth)
+static void flood_fill_seed(struct quirc *q, int x, int y, int from, int to, span_func_t func, void *user_data,
+							int depth)
 {
-	int left = x;
-	int right = x;
-	int i;
-	quirc_pixel_t *row = q->pixels + y * q->w;
+
+	struct iterative_flood_fill_params params[FLOOD_FILL_MAX_DEPTH];
+
+	int index = 0;
+	int left, right, i, fif, sif;
+	fif = 0;
+	sif = 0;
+	quirc_pixel_t *row;
+	params[0].x = x;
+	params[0].y = y;
 
 	if (depth >= FLOOD_FILL_MAX_DEPTH)
 		return;
 
-	while (left > 0 && row[left - 1] == from)
-		left--;
+	do
+	{
+		row = q->pixels + params[index].y * q->w;
+		left = params[index].x;
+		right = params[index].x;
 
-	while (right < q->w - 1 && row[right + 1] == from)
-		right++;
+		while (left > 0 && row[left - 1] == from)
+			left--;
 
-	/* Fill the extent */
-	for (i = left; i <= right; i++)
-		row[i] = to;
-
-	if (func)
-		func(user_data, y, left, right);
-
-	/* Seed new flood-fills */
-	if (y > 0) {
-		row = q->pixels + (y - 1) * q->w;
+		while (right < q->w - 1 && row[right + 1] == from)
+			right++;
 
 		for (i = left; i <= right; i++)
-			if (row[i] == from)
-				flood_fill_seed(q, i, y - 1, from, to,
-						func, user_data, depth + 1);
-	}
+			row[i] = to;
 
-	if (y < q->h - 1) {
-		row = q->pixels + (y + 1) * q->w;
+		if (func)
+		{
+			func(user_data, params[index].y, left, right);
+		}
 
-		for (i = left; i <= right; i++)
-			if (row[i] == from)
-				flood_fill_seed(q, i, y + 1, from, to,
-						func, user_data, depth + 1);
-	}
+		if (params[index].y > 0)
+		{
+			row = q->pixels + (params[index].y - 1) * q->w;
+
+			for (i = left; i <= right; i++)
+				if (row[i] == from)
+				{
+					index++;
+					depth++;
+					params[index].x = i;
+					params[index].y = params[index - 1].y - 1;
+					fif = 1;
+					break;
+				}
+
+			if (fif)
+			{
+				fif = 0;
+				continue;
+			}
+		}
+
+		if (params[index].y < q->h - 1)
+		{
+			row = q->pixels + (params[index].y + 1) * q->w;
+			for (i = left; i <= right; i++)
+				if (row[i] == from)
+				{
+					index++;
+					depth++;
+					params[index].x = i;
+					params[index].y = params[index - 1].y + 1;
+					sif = 1;
+					break;
+				}
+
+			if (sif)
+			{
+				sif = 0;
+				continue;
+			}
+		}
+
+		index--;
+	} while (index >= 0);
 }
 
 /************************************************************************
