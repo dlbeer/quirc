@@ -17,8 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "quirc_internal.h"
- 
-  
+
 const char *quirc_version(void)
 {
 	return "1.0";

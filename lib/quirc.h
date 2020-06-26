@@ -17,10 +17,6 @@
 #ifndef QUIRC_H_
 #define QUIRC_H_
 
-//If you want to unable LOW_STACK_MODE, just add the sentece #undef LOW_STACK_MODE just below of #defino LOW_STACK_MODE
-#define LOW_STACK_MODE
-#undef LOW_STACK_MODE
-
 #include <stdint.h>
 
 #ifdef __cplusplus
