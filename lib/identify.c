@@ -25,10 +25,10 @@
  */
 
 static int line_intersect(const struct quirc_point *p0,
-						  const struct quirc_point *p1,
-						  const struct quirc_point *q0,
-						  const struct quirc_point *q1,
-						  struct quirc_point *r)
+			  const struct quirc_point *p1,
+			  const struct quirc_point *q0,
+			  const struct quirc_point *q1,
+			  struct quirc_point *r)
 {
 	/* (a, b) is perpendicular to line p */
 	int a = -(p1->y - p0->y);
@@ -62,8 +62,8 @@ static int line_intersect(const struct quirc_point *p0,
 }
 
 static void perspective_setup(double *c,
-							  const struct quirc_point *rect,
-							  double w, double h)
+			      const struct quirc_point *rect,
+			      double w, double h)
 {
 	double x0 = rect[0].x;
 	double y0 = rect[0].y;
@@ -74,57 +74,55 @@ static void perspective_setup(double *c,
 	double x3 = rect[3].x;
 	double y3 = rect[3].y;
 
-	double wden = w * (x2 * y3 - x3 * y2 + (x3 - x2) * y1 + x1 * (y2 - y3));
-	double hden = h * (x2 * y3 + x1 * (y2 - y3) - x3 * y2 + (x3 - x2) * y1);
+	double wden = w * (x2*y3 - x3*y2 + (x3-x2)*y1 + x1*(y2-y3));
+	double hden = h * (x2*y3 + x1*(y2-y3) - x3*y2 + (x3-x2)*y1);
 
-	c[0] = (x1 * (x2 * y3 - x3 * y2) + x0 * (-x2 * y3 + x3 * y2 + (x2 - x3) * y1) +
-			x1 * (x3 - x2) * y0) /
-		   wden;
-	c[1] = -(x0 * (x2 * y3 + x1 * (y2 - y3) - x2 * y1) - x1 * x3 * y2 + x2 * x3 * y1 + (x1 * x3 - x2 * x3) * y0) / hden;
+	c[0] = (x1*(x2*y3-x3*y2) + x0*(-x2*y3+x3*y2+(x2-x3)*y1) +
+		x1*(x3-x2)*y0) / wden;
+	c[1] = -(x0*(x2*y3+x1*(y2-y3)-x2*y1) - x1*x3*y2 + x2*x3*y1
+		 + (x1*x3-x2*x3)*y0) / hden;
 	c[2] = x0;
-	c[3] = (y0 * (x1 * (y3 - y2) - x2 * y3 + x3 * y2) + y1 * (x2 * y3 - x3 * y2) +
-			x0 * y1 * (y2 - y3)) /
-		   wden;
-	c[4] = (x0 * (y1 * y3 - y2 * y3) + x1 * y2 * y3 - x2 * y1 * y3 +
-			y0 * (x3 * y2 - x1 * y2 + (x2 - x3) * y1)) /
-		   hden;
+	c[3] = (y0*(x1*(y3-y2)-x2*y3+x3*y2) + y1*(x2*y3-x3*y2) +
+		x0*y1*(y2-y3)) / wden;
+	c[4] = (x0*(y1*y3-y2*y3) + x1*y2*y3 - x2*y1*y3 +
+		y0*(x3*y2-x1*y2+(x2-x3)*y1)) / hden;
 	c[5] = y0;
-	c[6] = (x1 * (y3 - y2) + x0 * (y2 - y3) + (x2 - x3) * y1 + (x3 - x2) * y0) / wden;
-	c[7] = (-x2 * y3 + x1 * y3 + x3 * y2 + x0 * (y1 - y2) - x3 * y1 + (x2 - x1) * y0) /
-		   hden;
+	c[6] = (x1*(y3-y2) + x0*(y2-y3) + (x2-x3)*y1 + (x3-x2)*y0) / wden;
+	c[7] = (-x2*y3 + x1*y3 + x3*y2 + x0*(y1-y2) - x3*y1 + (x2-x1)*y0) /
+		hden;
 }
 
 static void perspective_map(const double *c,
-							double u, double v, struct quirc_point *ret)
+			    double u, double v, struct quirc_point *ret)
 {
-	double den = c[6] * u + c[7] * v + 1.0;
-	double x = (c[0] * u + c[1] * v + c[2]) / den;
-	double y = (c[3] * u + c[4] * v + c[5]) / den;
+	double den = c[6]*u + c[7]*v + 1.0;
+	double x = (c[0]*u + c[1]*v + c[2]) / den;
+	double y = (c[3]*u + c[4]*v + c[5]) / den;
 
-	ret->x = (int)rint(x);
-	ret->y = (int)rint(y);
+	ret->x = (int) rint(x);
+	ret->y = (int) rint(y);
 }
 
 static void perspective_unmap(const double *c,
-							  const struct quirc_point *in,
-							  double *u, double *v)
+			      const struct quirc_point *in,
+			      double *u, double *v)
 {
 	double x = in->x;
 	double y = in->y;
-	double den = -c[0] * c[7] * y + c[1] * c[6] * y + (c[3] * c[7] - c[4] * c[6]) * x +
-				 c[0] * c[4] - c[1] * c[3];
+	double den = -c[0]*c[7]*y + c[1]*c[6]*y + (c[3]*c[7]-c[4]*c[6])*x +
+		c[0]*c[4] - c[1]*c[3];
 
-	*u = -(c[1] * (y - c[5]) - c[2] * c[7] * y + (c[5] * c[7] - c[4]) * x + c[2] * c[4]) /
-		 den;
-	*v = (c[0] * (y - c[5]) - c[2] * c[6] * y + (c[5] * c[6] - c[3]) * x + c[2] * c[3]) /
-		 den;
+	*u = -(c[1]*(y-c[5]) - c[2]*c[7]*y + (c[5]*c[7]-c[4])*x + c[2]*c[4]) /
+		den;
+	*v = (c[0]*(y-c[5]) - c[2]*c[6]*y + (c[5]*c[6]-c[3])*x + c[2]*c[3]) /
+		den;
 }
 
 /************************************************************************
  * Span-based floodfill routine
  */
 
-#define FLOOD_FILL_MAX_DEPTH 4096
+#define FLOOD_FILL_MAX_DEPTH		4096
 
 typedef void (*span_func_t)(void *user_data, int y, int left, int right);
 
@@ -223,10 +221,9 @@ static uint8_t otsu(const struct quirc *q)
 	// Calculate histogram
 	unsigned int histogram[UINT8_MAX + 1];
 	(void)memset(histogram, 0, sizeof(histogram));
-	uint8_t *ptr = q->image;
+	uint8_t* ptr = q->image;
 	int length = numPixels;
-	while (length--)
-	{
+	while (length--) {
 		uint8_t value = *ptr++;
 		histogram[value]++;
 	}
@@ -234,8 +231,7 @@ static uint8_t otsu(const struct quirc *q)
 	// Calculate weighted sum of histogram values
 	unsigned int sum = 0;
 	unsigned int i = 0;
-	for (i = 0; i <= UINT8_MAX; ++i)
-	{
+	for (i = 0; i <= UINT8_MAX; ++i) {
 		sum += i * histogram[i];
 	}
 
@@ -244,8 +240,7 @@ static uint8_t otsu(const struct quirc *q)
 	int q1 = 0;
 	double max = 0;
 	uint8_t threshold = 0;
-	for (i = 0; i <= UINT8_MAX; ++i)
-	{
+	for (i = 0; i <= UINT8_MAX; ++i) {
 		// Weighted background
 		q1 += histogram[i];
 		if (q1 == 0)
@@ -261,8 +256,7 @@ static uint8_t otsu(const struct quirc *q)
 		const double m2 = ((double)sum - sumB) / q2;
 		const double m1m2 = m1 - m2;
 		const double variance = m1m2 * m1m2 * q1 * q2;
-		if (variance >= max)
-		{
+		if (variance >= max) {
 			threshold = i;
 			max = variance;
 		}
@@ -310,12 +304,11 @@ static int region_code(struct quirc *q, int x, int y)
 	return region;
 }
 
-struct polygon_score_data
-{
-	struct quirc_point ref;
+struct polygon_score_data {
+	struct quirc_point	ref;
 
-	int scores[4];
-	struct quirc_point *corners;
+	int			scores[4];
+	struct quirc_point	*corners;
 };
 
 static void find_one_corner(void *user_data, int y, int left, int right)
@@ -326,13 +319,11 @@ static void find_one_corner(void *user_data, int y, int left, int right)
 	int dy = y - psd->ref.y;
 	int i;
 
-	for (i = 0; i < 2; i++)
-	{
+	for (i = 0; i < 2; i++) {
 		int dx = xs[i] - psd->ref.x;
 		int d = dx * dx + dy * dy;
 
-		if (d > psd->scores[0])
-		{
+		if (d > psd->scores[0]) {
 			psd->scores[0] = d;
 			psd->corners[0].x = xs[i];
 			psd->corners[0].y = y;
@@ -347,17 +338,14 @@ static void find_other_corners(void *user_data, int y, int left, int right)
 	int xs[2] = {left, right};
 	int i;
 
-	for (i = 0; i < 2; i++)
-	{
+	for (i = 0; i < 2; i++) {
 		int up = xs[i] * psd->ref.x + y * psd->ref.y;
 		int right = xs[i] * -psd->ref.y + y * psd->ref.x;
 		int scores[4] = {up, right, -up, -right};
 		int j;
 
-		for (j = 0; j < 4; j++)
-		{
-			if (scores[j] > psd->scores[j])
-			{
+		for (j = 0; j < 4; j++) {
+			if (scores[j] > psd->scores[j]) {
 				psd->scores[j] = scores[j];
 				psd->corners[j].x = xs[i];
 				psd->corners[j].y = y;
@@ -367,8 +355,8 @@ static void find_other_corners(void *user_data, int y, int left, int right)
 }
 
 static void find_region_corners(struct quirc *q,
-								int rcode, const struct quirc_point *ref,
-								struct quirc_point *corners)
+				int rcode, const struct quirc_point *ref,
+				struct quirc_point *corners)
 {
 	struct quirc_region *region = &q->regions[rcode];
 	struct polygon_score_data psd;
@@ -380,15 +368,15 @@ static void find_region_corners(struct quirc *q,
 	memcpy(&psd.ref, ref, sizeof(psd.ref));
 	psd.scores[0] = -1;
 	flood_fill_seed(q, region->seed.x, region->seed.y,
-					rcode, QUIRC_PIXEL_BLACK,
-					find_one_corner, &psd, 0);
+			rcode, QUIRC_PIXEL_BLACK,
+			find_one_corner, &psd, 0);
 
 	psd.ref.x = psd.corners[0].x - psd.ref.x;
 	psd.ref.y = psd.corners[0].y - psd.ref.y;
 
 	for (i = 0; i < 4; i++)
 		memcpy(&psd.corners[i], &region->seed,
-			   sizeof(psd.corners[i]));
+		       sizeof(psd.corners[i]));
 
 	i = region->seed.x * psd.ref.x + region->seed.y * psd.ref.y;
 	psd.scores[0] = i;
@@ -398,8 +386,8 @@ static void find_region_corners(struct quirc *q,
 	psd.scores[3] = -i;
 
 	flood_fill_seed(q, region->seed.x, region->seed.y,
-					QUIRC_PIXEL_BLACK, rcode,
-					find_other_corners, &psd, 0);
+			QUIRC_PIXEL_BLACK, rcode,
+			find_other_corners, &psd, 0);
 }
 
 static void record_capstone(struct quirc *q, int ring, int stone)
@@ -435,8 +423,9 @@ static void test_capstone(struct quirc *q, int x, int y, int *pb)
 {
 	int ring_right = region_code(q, x - pb[4], y);
 	int stone = region_code(q, x - pb[4] - pb[3] - pb[2], y);
-	int ring_left = region_code(q, x - pb[4] - pb[3] - pb[2] - pb[1] - pb[0],
-								y);
+	int ring_left = region_code(q, x - pb[4] - pb[3] -
+				    pb[2] - pb[1] - pb[0],
+				    y);
 	struct quirc_region *stone_reg;
 	struct quirc_region *ring_reg;
 	int ratio;
@@ -477,19 +466,16 @@ static void finder_scan(struct quirc *q, int y)
 	int pb[5];
 
 	memset(pb, 0, sizeof(pb));
-	for (x = 0; x < q->w; x++)
-	{
+	for (x = 0; x < q->w; x++) {
 		int color = row[x] ? 1 : 0;
 
-		if (x && color != last_color)
-		{
+		if (x && color != last_color) {
 			memmove(pb, pb + 1, sizeof(pb[0]) * 4);
 			pb[4] = run_length;
 			run_length = 0;
 			run_count++;
 
-			if (!color && run_count >= 5)
-			{
+			if (!color && run_count >= 5) {
 				static int check[5] = {1, 1, 3, 1, 1};
 				int avg, err;
 				int i;
@@ -500,7 +486,7 @@ static void finder_scan(struct quirc *q, int y)
 
 				for (i = 0; i < 5; i++)
 					if (pb[i] < check[i] * avg - err ||
-						pb[i] > check[i] * avg + err)
+					    pb[i] > check[i] * avg + err)
 						ok = 0;
 
 				if (ok)
@@ -538,29 +524,25 @@ static void find_alignment_pattern(struct quirc *q, int index)
 	perspective_map(c2->c, u + 1.0, v, &c);
 
 	size_estimate = abs((a.x - b.x) * -(c.y - b.y) +
-						(a.y - b.y) * (c.x - b.x));
+			    (a.y - b.y) * (c.x - b.x));
 
 	/* Spiral outwards from the estimate point until we find something
 	 * roughly the right size. Don't look too far from the estimate
 	 * point.
 	 */
-	while (step_size * step_size < size_estimate * 100)
-	{
+	while (step_size * step_size < size_estimate * 100) {
 		static const int dx_map[] = {1, 0, -1, 0};
 		static const int dy_map[] = {0, -1, 0, 1};
 		int i;
 
-		for (i = 0; i < step_size; i++)
-		{
+		for (i = 0; i < step_size; i++) {
 			int code = region_code(q, b.x, b.y);
 
-			if (code >= 0)
-			{
+			if (code >= 0) {
 				struct quirc_region *reg = &q->regions[code];
 
 				if (reg->count >= size_estimate / 2 &&
-					reg->count <= size_estimate * 2)
-				{
+				    reg->count <= size_estimate * 2) {
 					qr->align_region = code;
 					return;
 				}
@@ -583,12 +565,10 @@ static void find_leftmost_to_line(void *user_data, int y, int left, int right)
 	int xs[2] = {left, right};
 	int i;
 
-	for (i = 0; i < 2; i++)
-	{
+	for (i = 0; i < 2; i++) {
 		int d = -psd->ref.y * xs[i] + psd->ref.x * y;
 
-		if (d < psd->scores[0])
-		{
+		if (d < psd->scores[0]) {
 			psd->scores[0] = d;
 			psd->corners[0].x = xs[i];
 			psd->corners[0].y = y;
@@ -600,8 +580,8 @@ static void find_leftmost_to_line(void *user_data, int y, int left, int right)
  * of black/white transitions.
  */
 static int timing_scan(const struct quirc *q,
-					   const struct quirc_point *p0,
-					   const struct quirc_point *p1)
+		       const struct quirc_point *p0,
+		       const struct quirc_point *p1)
 {
 	int n = p1->x - p0->x;
 	int d = p1->y - p0->y;
@@ -620,8 +600,7 @@ static int timing_scan(const struct quirc *q,
 	if (p1->x < 0 || p1->y < 0 || p1->x >= q->w || p1->y >= q->h)
 		return -1;
 
-	if (abs(n) > abs(d))
-	{
+	if (abs(n) > abs(d)) {
 		int swap = n;
 
 		n = d;
@@ -629,37 +608,28 @@ static int timing_scan(const struct quirc *q,
 
 		dom = &x;
 		nondom = &y;
-	}
-	else
-	{
+	} else {
 		dom = &y;
 		nondom = &x;
 	}
 
-	if (n < 0)
-	{
+	if (n < 0) {
 		n = -n;
 		nondom_step = -1;
-	}
-	else
-	{
+	} else {
 		nondom_step = 1;
 	}
 
-	if (d < 0)
-	{
+	if (d < 0) {
 		d = -d;
 		dom_step = -1;
-	}
-	else
-	{
+	} else {
 		dom_step = 1;
 	}
 
 	x = p0->x;
 	y = p0->y;
-	for (i = 0; i <= d; i++)
-	{
+	for (i = 0; i <= d; i++) {
 		int pixel;
 
 		if (y < 0 || y >= q->h || x < 0 || x >= q->w)
@@ -667,21 +637,17 @@ static int timing_scan(const struct quirc *q,
 
 		pixel = q->pixels[y * q->w + x];
 
-		if (pixel)
-		{
+		if (pixel) {
 			if (run_length >= 2)
 				count++;
 			run_length = 0;
-		}
-		else
-		{
+		} else {
 			run_length++;
 		}
 
 		a += n;
 		*dom += dom_step;
-		if (a >= d)
-		{
+		if (a >= d) {
 			*nondom += nondom_step;
 			a -= d;
 		}
@@ -707,8 +673,7 @@ static int measure_timing_pattern(struct quirc *q, int index)
 	int ver;
 	int size;
 
-	for (i = 0; i < 3; i++)
-	{
+	for (i = 0; i < 3; i++) {
 		static const double us[] = {6.5, 6.5, 0.5};
 		static const double vs[] = {0.5, 6.5, 6.5};
 		struct quirc_capstone *cap = &q->capstones[qr->caps[i]];
@@ -758,13 +723,12 @@ static int fitness_cell(const struct quirc *q, int index, int x, int y)
 	int u, v;
 
 	for (v = 0; v < 3; v++)
-		for (u = 0; u < 3; u++)
-		{
+		for (u = 0; u < 3; u++) {
 			static const double offsets[] = {0.3, 0.5, 0.7};
 			struct quirc_point p;
 
 			perspective_map(qr->c, x + offsets[u],
-							y + offsets[v], &p);
+					       y + offsets[v], &p);
 			if (p.y < 0 || p.y >= q->h || p.x < 0 || p.x >= q->w)
 				continue;
 
@@ -778,13 +742,12 @@ static int fitness_cell(const struct quirc *q, int index, int x, int y)
 }
 
 static int fitness_ring(const struct quirc *q, int index, int cx, int cy,
-						int radius)
+			int radius)
 {
 	int i;
 	int score = 0;
 
-	for (i = 0; i < radius * 2; i++)
-	{
+	for (i = 0; i < radius * 2; i++) {
 		score += fitness_cell(q, index, cx - radius + i, cy - radius);
 		score += fitness_cell(q, index, cx - radius, cy + radius - i);
 		score += fitness_cell(q, index, cx + radius, cy - radius + i);
@@ -797,8 +760,8 @@ static int fitness_ring(const struct quirc *q, int index, int cx, int cy,
 static int fitness_apat(const struct quirc *q, int index, int cx, int cy)
 {
 	return fitness_cell(q, index, cx, cy) -
-		   fitness_ring(q, index, cx, cy, 1) +
-		   fitness_ring(q, index, cx, cy, 2);
+		fitness_ring(q, index, cx, cy, 1) +
+		fitness_ring(q, index, cx, cy, 2);
 }
 
 static int fitness_capstone(const struct quirc *q, int index, int x, int y)
@@ -807,9 +770,9 @@ static int fitness_capstone(const struct quirc *q, int index, int x, int y)
 	y += 3;
 
 	return fitness_cell(q, index, x, y) +
-		   fitness_ring(q, index, x, y, 1) -
-		   fitness_ring(q, index, x, y, 2) +
-		   fitness_ring(q, index, x, y, 3);
+		fitness_ring(q, index, x, y, 1) -
+		fitness_ring(q, index, x, y, 2) +
+		fitness_ring(q, index, x, y, 3);
 }
 
 /* Compute a fitness score for the currently configured perspective
@@ -826,8 +789,7 @@ static int fitness_all(const struct quirc *q, int index)
 	int ap_count;
 
 	/* Check the timing pattern */
-	for (i = 0; i < qr->grid_size - 14; i++)
-	{
+	for (i = 0; i < qr->grid_size - 14; i++) {
 		int expect = (i & 1) ? 1 : -1;
 
 		score += fitness_cell(q, index, i + 7, 6) * expect;
@@ -847,8 +809,7 @@ static int fitness_all(const struct quirc *q, int index)
 	while ((ap_count < QUIRC_MAX_ALIGNMENT) && info->apat[ap_count])
 		ap_count++;
 
-	for (i = 1; i + 1 < ap_count; i++)
-	{
+	for (i = 1; i + 1 < ap_count; i++) {
 		score += fitness_apat(q, index, 6, info->apat[i]);
 		score += fitness_apat(q, index, info->apat[i], 6);
 	}
@@ -856,7 +817,7 @@ static int fitness_all(const struct quirc *q, int index)
 	for (i = 1; i < ap_count; i++)
 		for (j = 1; j < ap_count; j++)
 			score += fitness_apat(q, index,
-								  info->apat[i], info->apat[j]);
+					info->apat[i], info->apat[j]);
 
 	return score;
 }
@@ -872,10 +833,8 @@ static void jiggle_perspective(struct quirc *q, int index)
 	for (i = 0; i < 8; i++)
 		adjustments[i] = qr->c[i] * 0.02;
 
-	for (pass = 0; pass < 5; pass++)
-	{
-		for (i = 0; i < 16; i++)
-		{
+	for (pass = 0; pass < 5; pass++) {
+		for (i = 0; i < 16; i++) {
 			int j = i >> 1;
 			int test;
 			double old = qr->c[j];
@@ -912,12 +871,12 @@ static void setup_qr_perspective(struct quirc *q, int index)
 
 	/* Set up the perspective map for reading the grid */
 	memcpy(&rect[0], &q->capstones[qr->caps[1]].corners[0],
-		   sizeof(rect[0]));
+	       sizeof(rect[0]));
 	memcpy(&rect[1], &q->capstones[qr->caps[2]].corners[0],
-		   sizeof(rect[0]));
+	       sizeof(rect[0]));
 	memcpy(&rect[2], &qr->align, sizeof(rect[0]));
 	memcpy(&rect[3], &q->capstones[qr->caps[0]].corners[0],
-		   sizeof(rect[0]));
+	       sizeof(rect[0]));
 	perspective_setup(qr->c, rect, qr->grid_size - 7, qr->grid_size - 7);
 
 	jiggle_perspective(q, index);
@@ -927,22 +886,20 @@ static void setup_qr_perspective(struct quirc *q, int index)
  * to the given reference line.
  */
 static void rotate_capstone(struct quirc_capstone *cap,
-							const struct quirc_point *h0,
-							const struct quirc_point *hd)
+			    const struct quirc_point *h0,
+			    const struct quirc_point *hd)
 {
 	struct quirc_point copy[4];
 	int j;
 	int best = 0;
 	int best_score = INT_MAX;
 
-	for (j = 0; j < 4; j++)
-	{
+	for (j = 0; j < 4; j++) {
 		struct quirc_point *p = &cap->corners[j];
 		int score = (p->x - h0->x) * -hd->y +
-					(p->y - h0->y) * hd->x;
+			(p->y - h0->y) * hd->x;
 
-		if (!j || score < best_score)
-		{
+		if (!j || score < best_score) {
 			best = j;
 			best_score = score;
 		}
@@ -951,7 +908,7 @@ static void rotate_capstone(struct quirc_capstone *cap,
 	/* Rotate the capstone */
 	for (j = 0; j < 4; j++)
 		memcpy(&copy[j], &cap->corners[(j + best) % 4],
-			   sizeof(copy[j]));
+		       sizeof(copy[j]));
 	memcpy(cap->corners, copy, sizeof(cap->corners));
 	perspective_setup(cap->c, cap->corners, 7.0, 7.0);
 }
@@ -975,9 +932,7 @@ static void record_qr_grid(struct quirc *q, int a, int b, int c)
 
 	/* Make sure A-B-C is clockwise */
 	if ((q->capstones[b].center.x - h0.x) * -hd.y +
-			(q->capstones[b].center.y - h0.y) * hd.x >
-		0)
-	{
+	    (q->capstones[b].center.y - h0.y) * hd.x > 0) {
 		int swap = a;
 
 		a = c;
@@ -999,8 +954,7 @@ static void record_qr_grid(struct quirc *q, int a, int b, int c)
 	/* Rotate each capstone so that corner 0 is top-left with respect
 	 * to the grid.
 	 */
-	for (i = 0; i < 3; i++)
-	{
+	for (i = 0; i < 3; i++) {
 		struct quirc_capstone *cap = &q->capstones[qr->caps[i]];
 
 		rotate_capstone(cap, &h0, &hd);
@@ -1017,23 +971,21 @@ static void record_qr_grid(struct quirc *q, int a, int b, int c)
 	 * lines from capstones A and C.
 	 */
 	if (!line_intersect(&q->capstones[a].corners[0],
-						&q->capstones[a].corners[1],
-						&q->capstones[c].corners[0],
-						&q->capstones[c].corners[3],
-						&qr->align))
+			    &q->capstones[a].corners[1],
+			    &q->capstones[c].corners[0],
+			    &q->capstones[c].corners[3],
+			    &qr->align))
 		goto fail;
 
 	/* On V2+ grids, we should use the alignment pattern. */
-	if (qr->grid_size > 21)
-	{
+	if (qr->grid_size > 21) {
 		/* Try to find the actual location of the alignment pattern. */
 		find_alignment_pattern(q, qr_index);
 
 		/* Find the point of the alignment pattern closest to the
 		 * top-left of the QR grid.
 		 */
-		if (qr->align_region >= 0)
-		{
+		if (qr->align_region >= 0) {
 			struct polygon_score_data psd;
 			struct quirc_region *reg =
 				&q->regions[qr->align_region];
@@ -1044,14 +996,14 @@ static void record_qr_grid(struct quirc *q, int a, int b, int c)
 			memcpy(&psd.ref, &hd, sizeof(psd.ref));
 			psd.corners = &qr->align;
 			psd.scores[0] = -hd.y * qr->align.x +
-							hd.x * qr->align.y;
+				hd.x * qr->align.y;
 
 			flood_fill_seed(q, reg->seed.x, reg->seed.y,
-							qr->align_region, QUIRC_PIXEL_BLACK,
-							NULL, NULL, 0);
+					qr->align_region, QUIRC_PIXEL_BLACK,
+					NULL, NULL, 0);
 			flood_fill_seed(q, reg->seed.x, reg->seed.y,
-							QUIRC_PIXEL_BLACK, qr->align_region,
-							find_leftmost_to_line, &psd, 0);
+					QUIRC_PIXEL_BLACK, qr->align_region,
+					find_leftmost_to_line, &psd, 0);
 		}
 	}
 
@@ -1067,21 +1019,19 @@ fail:
 	q->num_grids--;
 }
 
-struct neighbour
-{
-	int index;
-	double distance;
+struct neighbour {
+	int		index;
+	double		distance;
 };
 
-struct neighbour_list
-{
-	struct neighbour n[QUIRC_MAX_CAPSTONES];
-	int count;
+struct neighbour_list {
+	struct neighbour	n[QUIRC_MAX_CAPSTONES];
+	int			count;
 };
 
 static void test_neighbours(struct quirc *q, int i,
-							const struct neighbour_list *hlist,
-							const struct neighbour_list *vlist)
+			    const struct neighbour_list *hlist,
+			    const struct neighbour_list *vlist)
 {
 	int j, k;
 	double best_score = 0.0;
@@ -1089,8 +1039,7 @@ static void test_neighbours(struct quirc *q, int i,
 
 	/* Test each possible grouping */
 	for (j = 0; j < hlist->count; j++)
-		for (k = 0; k < vlist->count; k++)
-		{
+		for (k = 0; k < vlist->count; k++) {
 			const struct neighbour *hn = &hlist->n[j];
 			const struct neighbour *vn = &vlist->n[k];
 			double score = fabs(1.0 - hn->distance / vn->distance);
@@ -1098,8 +1047,7 @@ static void test_neighbours(struct quirc *q, int i,
 			if (score > 2.5)
 				continue;
 
-			if (best_h < 0 || score < best_score)
-			{
+			if (best_h < 0 || score < best_score) {
 				best_h = hn->index;
 				best_v = vn->index;
 				best_score = score;
@@ -1128,8 +1076,7 @@ static void test_grouping(struct quirc *q, int i)
 	/* Look for potential neighbours by examining the relative gradients
 	 * from this capstone to others.
 	 */
-	for (j = 0; j < q->num_capstones; j++)
-	{
+	for (j = 0; j < q->num_capstones; j++) {
 		struct quirc_capstone *c2 = &q->capstones[j];
 		double u, v;
 
@@ -1141,16 +1088,14 @@ static void test_grouping(struct quirc *q, int i)
 		u = fabs(u - 3.5);
 		v = fabs(v - 3.5);
 
-		if (u < 0.2 * v)
-		{
+		if (u < 0.2 * v) {
 			struct neighbour *n = &hlist.n[hlist.count++];
 
 			n->index = j;
 			n->distance = v;
 		}
 
-		if (v < 0.2 * u)
-		{
+		if (v < 0.2 * u) {
 			struct neighbour *n = &vlist.n[vlist.count++];
 
 			n->index = j;
@@ -1166,16 +1111,14 @@ static void test_grouping(struct quirc *q, int i)
 
 static void pixels_setup(struct quirc *q, uint8_t threshold)
 {
-	if (QUIRC_PIXEL_ALIAS_IMAGE)
-	{
+	if (QUIRC_PIXEL_ALIAS_IMAGE) {
 		q->pixels = (quirc_pixel_t *)q->image;
 	}
 
-	uint8_t *source = q->image;
-	quirc_pixel_t *dest = q->pixels;
+	uint8_t* source = q->image;
+	quirc_pixel_t* dest = q->pixels;
 	int length = q->w * q->h;
-	while (length--)
-	{
+	while (length--) {
 		uint8_t value = *source++;
 		*dest++ = (value < threshold) ? QUIRC_PIXEL_BLACK : QUIRC_PIXEL_WHITE;
 	}
@@ -1210,7 +1153,7 @@ void quirc_end(struct quirc *q)
 }
 
 void quirc_extract(const struct quirc *q, int index,
-				   struct quirc_code *code)
+		   struct quirc_code *code)
 {
 	const struct quirc_grid *qr = &q->grids[index];
 	int y;
@@ -1224,17 +1167,15 @@ void quirc_extract(const struct quirc *q, int index,
 	perspective_map(qr->c, 0.0, 0.0, &code->corners[0]);
 	perspective_map(qr->c, qr->grid_size, 0.0, &code->corners[1]);
 	perspective_map(qr->c, qr->grid_size, qr->grid_size,
-					&code->corners[2]);
+			&code->corners[2]);
 	perspective_map(qr->c, 0.0, qr->grid_size, &code->corners[3]);
 
 	code->size = qr->grid_size;
 
-	for (y = 0; y < qr->grid_size; y++)
-	{
+	for (y = 0; y < qr->grid_size; y++) {
 		int x;
 
-		for (x = 0; x < qr->grid_size; x++)
-		{
+		for (x = 0; x < qr->grid_size; x++) {
 			if (read_cell(q, index, x, y) > 0)
 				code->cell_bitmap[i >> 3] |= (1 << (i & 7));
 

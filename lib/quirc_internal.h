@@ -60,13 +60,6 @@ struct quirc_capstone
 	int qr_grid;
 };
 
-struct iterative_flood_fill_params
-{
-	//struct quirc *q;
-	int x;
-	int y;
-};
-
 struct quirc_grid
 {
 	/* Capstone indices */
@@ -126,4 +119,9 @@ struct quirc_version_info
 
 extern const struct quirc_version_info quirc_version_db[QUIRC_MAX_VERSION + 1];
 
+struct iterative_flood_fill_params
+{
+	int x;
+	int y;
+};
 #endif
