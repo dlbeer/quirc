@@ -78,7 +78,9 @@ typedef enum {
 const char *quirc_strerror(quirc_decode_error_t err);
 
 /* Limits on the maximum size of QR-codes and their content. */
-#define QUIRC_MAX_BITMAP	3917
+#define QUIRC_MAX_VERSION	40
+#define QUIRC_MAX_GRID_SIZE	(QUIRC_MAX_VERSION * 4 + 17)
+#define QUIRC_MAX_BITMAP	(((QUIRC_MAX_GRID_SIZE * QUIRC_MAX_GRID_SIZE) + 7) / 8)
 #define QUIRC_MAX_PAYLOAD	8896
 
 /* QR-code ECC types. */

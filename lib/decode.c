@@ -409,7 +409,6 @@ struct datastream {
 static inline int grid_bit(const struct quirc_code *code, int x, int y)
 {
 	int p = y * code->size + x;
-
 	return (code->cell_bitmap[p >> 3] >> (p & 7)) & 1;
 }
 

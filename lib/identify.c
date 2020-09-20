@@ -656,8 +656,11 @@ static int measure_timing_pattern(struct quirc *q, int index)
 	/* Choose the nearest allowable grid size */
 	size = scan * 2 + 13;
 	ver = (size - 15) / 4;
-	qr->grid_size = ver * 4 + 17;
+	if (ver > QUIRC_MAX_VERSION) {
+		return -1;
+	}
 
+	qr->grid_size = ver * 4 + 17;
 	return 0;
 }
 
@@ -1135,11 +1138,10 @@ void quirc_extract(const struct quirc *q, int index,
 
 	for (y = 0; y < qr->grid_size; y++) {
 		int x;
-
 		for (x = 0; x < qr->grid_size; x++) {
-			if (read_cell(q, index, x, y) > 0)
-				code->cell_bitmap[i >> 3] |= (1 << (i & 7));
-
+			if (read_cell(q, index, x, y) > 0) {
+		                code->cell_bitmap[i >> 3] |= (1 << (i & 7));
+			}
 			i++;
 		}
 	}
