@@ -916,3 +916,19 @@ quirc_decode_error_t quirc_decode(const struct quirc_code *code,
 
 	return QUIRC_SUCCESS;
 }
+
+void quirc_flip(struct quirc_code *code)
+{
+    struct quirc_code flipped;
+    memset(&flipped, 0, sizeof(flipped));
+    int offset = 0;
+    for (int y = 0, sx = 0; y < code->size; y++, sx++) {
+        for (int x = 0, sy = 0; x < code->size; x++, sy++) {
+            if (grid_bit(code, sx, sy)) {
+                flipped.cell_bitmap[offset >> 3] |= (1 << (offset & 7));
+            }
+            offset++;
+        }
+    }
+    memcpy(&code->cell_bitmap, &flipped.cell_bitmap, sizeof(flipped.cell_bitmap));
+}
