@@ -174,6 +174,23 @@ for (i = 0; i < num_codes; i++) {
 `quirc_code` and `quirc_data` are flat structures which don't need to be
 initialized or freed after use.
 
+In case you also need to support horizontally flipped QR-codes (mirrored
+images according to ISO 18004:2015, pages 6 and 62), you can make a second
+decode attempt with the flipped image data whenever you get an ECC failure:
+
+```C
+    err = quirc_decode(&code, &data);
+    if (err == QUIRC_ERROR_DATA_ECC) {
+        quirc_flip(&code);
+        err = quirc_decode(&code, &data);
+    }
+
+    if (err)
+        printf("DECODE FAILED: %s\n", quirc_strerror(err));
+    else
+        printf("Data: %s\n", data.payload);
+```
+
 Copyright
 ---------
 Copyright (C) 2010-2012 Daniel Beer <<dlbeer@gmail.com>>
