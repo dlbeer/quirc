@@ -1140,7 +1140,7 @@ void quirc_extract(const struct quirc *q, int index,
 		int x;
 		for (x = 0; x < qr->grid_size; x++) {
 			if (read_cell(q, index, x, y) > 0) {
-		                code->cell_bitmap[i >> 3] |= (1 << (i & 7));
+				code->cell_bitmap[i >> 3] |= (1 << (i & 7));
 			}
 			i++;
 		}
