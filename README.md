@@ -38,11 +38,15 @@ video stream is displayed on screen as it's received, and any QR codes
 recognised are highlighted in the image, with the decoded information both
 displayed on the image and printed on stdout.
 
+This requires SDL and V4L2.
+
 ### quirc-scanner
 
 This program turns your camera into a barcode scanner. It's almost the same as
 the `demo` application, but it doesn't display the video stream, and thus
 doesn't require a graphical display.
+
+This requires V4L2.
 
 ### qrtest
 
@@ -56,6 +60,8 @@ stdout.
 This test is used for debugging. Given a single JPEG image, it will display a
 diagram showing the internal state of the decoder as well as printing
 additional information on stdout.
+
+This requires SDL.
 
 Installation
 ------------
