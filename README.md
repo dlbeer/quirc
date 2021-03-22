@@ -60,7 +60,7 @@ additional information on stdout.
 Installation
 ------------
 To build the library and associated demos/tests, type `make`. If you need to
-decode "large" image files build with `CFLAGS="-DQUIRC_MAX_REGIONS=65534" make`
+decode "large" image files build with `make CFLAGS="-DQUIRC_MAX_REGIONS=65534"`
 instead. Note that this will increase the memory usage, it is discouraged for
 low resource devices (i.e. embedded).
 
