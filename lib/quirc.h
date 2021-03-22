@@ -17,6 +17,7 @@
 #ifndef QUIRC_H_
 #define QUIRC_H_
 
+#include <stddef.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -52,9 +53,15 @@ int quirc_resize(struct quirc *q, int w, int h);
  * After filling the buffer, quirc_end() should be called to process
  * the image for QR-code recognition. The locations and content of each
  * code may be obtained using accessor functions described below.
+ *
+ * quirc_end_with_workarea() is a variation of quirc_end().
+ * quirc_end_with_workarea() uses the user-specified memory as working
+ * memory for computition while quirc_end() uses stack.
  */
 uint8_t *quirc_begin(struct quirc *q, int *w, int *h);
 void quirc_end(struct quirc *q);
+void quirc_end_with_workarea(struct quirc *q,
+				void *workarea, size_t workarea_size);
 
 /* This structure describes a location in the input image buffer. */
 struct quirc_point {

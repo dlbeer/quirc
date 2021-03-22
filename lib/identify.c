@@ -20,6 +20,11 @@
 #include <math.h>
 #include "quirc_internal.h"
 
+struct workarea {
+	void *p;
+	size_t len;
+};
+
 /************************************************************************
  * Linear algebra routines
  */
@@ -126,49 +131,130 @@ static void perspective_unmap(const double *c,
 
 typedef void (*span_func_t)(void *user_data, int y, int left, int right);
 
-static void flood_fill_seed(struct quirc *q, int x, int y, int from, int to,
-			    span_func_t func, void *user_data,
-			    int depth)
-{
-	int left = x;
-	int right = x;
+struct flood_fill_vars {
+	int x;
+	int y;
+	int right;
+	int left;
 	int i;
-	quirc_pixel_t *row = q->pixels + y * q->w;
+	int pc; /* caller id */
+};
 
-	if (depth >= FLOOD_FILL_MAX_DEPTH)
-		return;
+static void flood_fill_seed_impl(struct quirc *q,
+			    int x0, int y0,
+			    int from, int to,
+			    span_func_t func, void *user_data,
+			    struct flood_fill_vars *stack,
+			    int stack_size)
+{
+	struct flood_fill_vars *vars;
+	struct flood_fill_vars *next_vars;
+	const struct flood_fill_vars *const last_vars = &stack[stack_size - 1];
+	int i;
+	quirc_pixel_t *row;
 
-	while (left > 0 && row[left - 1] == from)
-		left--;
+	/* Set up the first context  */
+	next_vars = &stack[0];
+	next_vars->x = x0;
+	next_vars->y = y0;
 
-	while (right < q->w - 1 && row[right + 1] == from)
-		right++;
+call:
+	vars = next_vars;
+	vars->left = vars->x;
+	vars->right = vars->x;
+
+	row = q->pixels + vars->y * q->w;
+
+	while (vars->left > 0 && row[vars->left - 1] == from)
+		vars->left--;
+
+	while (vars->right < q->w - 1 && row[vars->right + 1] == from)
+		vars->right++;
 
 	/* Fill the extent */
-	for (i = left; i <= right; i++)
+	for (i = vars->left; i <= vars->right; i++)
 		row[i] = to;
 
 	if (func)
-		func(user_data, y, left, right);
+		func(user_data, vars->y, vars->left, vars->right);
+
+	if (vars == last_vars) {
+		return;
+	}
 
 	/* Seed new flood-fills */
-	if (y > 0) {
-		row = q->pixels + (y - 1) * q->w;
+	if (vars->y > 0) {
+		row = q->pixels + (vars->y - 1) * q->w;
 
-		for (i = left; i <= right; i++)
-			if (row[i] == from)
-				flood_fill_seed(q, i, y - 1, from, to,
-						func, user_data, depth + 1);
+		for (i = vars->left; i <= vars->right; i++)
+			if (row[i] == from) {
+				/* Save the current context */
+				vars->i = i;
+				vars->pc = 1;
+
+				/* Set up the next context */
+				next_vars = vars + 1;
+				next_vars->x = i;
+				next_vars->y = vars->y - 1;
+				goto call;
+return_from_call1: ;
+			}
 	}
 
-	if (y < q->h - 1) {
-		row = q->pixels + (y + 1) * q->w;
+	if (vars->y < q->h - 1) {
+		row = q->pixels + (vars->y + 1) * q->w;
 
-		for (i = left; i <= right; i++)
-			if (row[i] == from)
-				flood_fill_seed(q, i, y + 1, from, to,
-						func, user_data, depth + 1);
+		for (i = vars->left; i <= vars->right; i++)
+			if (row[i] == from) {
+				/* Save the current context */
+				vars->i = i;
+				vars->pc = 2;
+
+				/* Set up the next context */
+				next_vars = vars + 1;
+				next_vars->x = i;
+				next_vars->y = vars->y + 1;
+				goto call;
+return_from_call2: ;
+			}
 	}
+
+	if (vars > stack) {
+		/* Restore the previous context */
+		vars--;
+		i = vars->i;
+		if (vars->pc == 1) {
+			row = q->pixels + (vars->y - 1) * q->w;
+			goto return_from_call1;
+		}
+		row = q->pixels + (vars->y + 1) * q->w;
+		goto return_from_call2;
+	}
+}
+
+static void flood_fill_prepare_workarea(const struct workarea *wa,
+					struct flood_fill_vars **stackp,
+					int *stack_sizep)
+{
+	/* ensure the alignment */
+
+	size_t align = sizeof(int); /* alignof(**stackp) */
+	uintptr_t p = (uintptr_t)wa->p;
+	uintptr_t aligned_p = (p + align - 1) / align * align;
+
+	*stackp = (struct flood_fill_vars *)aligned_p;
+	*stack_sizep = (wa->len - (aligned_p - p)) / sizeof(**stackp);
+}
+
+static void flood_fill_seed(struct quirc *q, int x, int y, int from, int to,
+			    span_func_t func, void *user_data,
+			    const struct workarea *wa)
+{
+	struct flood_fill_vars *stack;
+	int stack_size;
+
+	flood_fill_prepare_workarea(wa, &stack, &stack_size);
+	flood_fill_seed_impl(q, x, y, from, to, func, user_data, stack, stack_size);
 }
 
 /************************************************************************
@@ -231,7 +317,8 @@ static void area_count(void *user_data, int y, int left, int right)
 	((struct quirc_region *)user_data)->count += right - left + 1;
 }
 
-static int region_code(struct quirc *q, int x, int y)
+static int region_code(struct quirc *q, int x, int y,
+				const struct workarea *wa)
 {
 	int pixel;
 	struct quirc_region *box;
@@ -260,7 +347,7 @@ static int region_code(struct quirc *q, int x, int y)
 	box->seed.y = y;
 	box->capstone = -1;
 
-	flood_fill_seed(q, x, y, pixel, region, area_count, box, 0);
+	flood_fill_seed(q, x, y, pixel, region, area_count, box, wa);
 
 	return region;
 }
@@ -317,7 +404,8 @@ static void find_other_corners(void *user_data, int y, int left, int right)
 
 static void find_region_corners(struct quirc *q,
 				int rcode, const struct quirc_point *ref,
-				struct quirc_point *corners)
+				struct quirc_point *corners,
+				const struct workarea *wa)
 {
 	struct quirc_region *region = &q->regions[rcode];
 	struct polygon_score_data psd;
@@ -330,7 +418,7 @@ static void find_region_corners(struct quirc *q,
 	psd.scores[0] = -1;
 	flood_fill_seed(q, region->seed.x, region->seed.y,
 			rcode, QUIRC_PIXEL_BLACK,
-			find_one_corner, &psd, 0);
+			find_one_corner, &psd, wa);
 
 	psd.ref.x = psd.corners[0].x - psd.ref.x;
 	psd.ref.y = psd.corners[0].y - psd.ref.y;
@@ -348,10 +436,11 @@ static void find_region_corners(struct quirc *q,
 
 	flood_fill_seed(q, region->seed.x, region->seed.y,
 			QUIRC_PIXEL_BLACK, rcode,
-			find_other_corners, &psd, 0);
+			find_other_corners, &psd, wa);
 }
 
-static void record_capstone(struct quirc *q, int ring, int stone)
+static void record_capstone(struct quirc *q, int ring, int stone,
+				const struct workarea *wa)
 {
 	struct quirc_region *stone_reg = &q->regions[stone];
 	struct quirc_region *ring_reg = &q->regions[ring];
@@ -373,20 +462,21 @@ static void record_capstone(struct quirc *q, int ring, int stone)
 	ring_reg->capstone = cs_index;
 
 	/* Find the corners of the ring */
-	find_region_corners(q, ring, &stone_reg->seed, capstone->corners);
+	find_region_corners(q, ring, &stone_reg->seed, capstone->corners, wa);
 
 	/* Set up the perspective transform and find the center */
 	perspective_setup(capstone->c, capstone->corners, 7.0, 7.0);
 	perspective_map(capstone->c, 3.5, 3.5, &capstone->center);
 }
 
-static void test_capstone(struct quirc *q, int x, int y, int *pb)
+static void test_capstone(struct quirc *q, int x, int y, int *pb,
+			const struct workarea *wa)
 {
-	int ring_right = region_code(q, x - pb[4], y);
-	int stone = region_code(q, x - pb[4] - pb[3] - pb[2], y);
+	int ring_right = region_code(q, x - pb[4], y, wa);
+	int stone = region_code(q, x - pb[4] - pb[3] - pb[2], y, wa);
 	int ring_left = region_code(q, x - pb[4] - pb[3] -
 				    pb[2] - pb[1] - pb[0],
-				    y);
+				    y, wa);
 	struct quirc_region *stone_reg;
 	struct quirc_region *ring_reg;
 	int ratio;
@@ -414,10 +504,10 @@ static void test_capstone(struct quirc *q, int x, int y, int *pb)
 	if (ratio < 10 || ratio > 70)
 		return;
 
-	record_capstone(q, ring_left, stone);
+	record_capstone(q, ring_left, stone, wa);
 }
 
-static void finder_scan(struct quirc *q, int y)
+static void finder_scan(struct quirc *q, int y, const struct workarea *wa)
 {
 	quirc_pixel_t *row = q->pixels + y * q->w;
 	int x;
@@ -451,7 +541,7 @@ static void finder_scan(struct quirc *q, int y)
 						ok = 0;
 
 				if (ok)
-					test_capstone(q, x, y, pb);
+					test_capstone(q, x, y, pb, wa);
 			}
 		}
 
@@ -460,7 +550,8 @@ static void finder_scan(struct quirc *q, int y)
 	}
 }
 
-static void find_alignment_pattern(struct quirc *q, int index)
+static void find_alignment_pattern(struct quirc *q, int index,
+				const struct workarea *wa)
 {
 	struct quirc_grid *qr = &q->grids[index];
 	struct quirc_capstone *c0 = &q->capstones[qr->caps[0]];
@@ -497,7 +588,7 @@ static void find_alignment_pattern(struct quirc *q, int index)
 		int i;
 
 		for (i = 0; i < step_size; i++) {
-			int code = region_code(q, b.x, b.y);
+			int code = region_code(q, b.x, b.y, wa);
 
 			if (code >= 0) {
 				struct quirc_region *reg = &q->regions[code];
@@ -877,7 +968,8 @@ static void rotate_capstone(struct quirc_capstone *cap,
 	perspective_setup(cap->c, cap->corners, 7.0, 7.0);
 }
 
-static void record_qr_grid(struct quirc *q, int a, int b, int c)
+static void record_qr_grid(struct quirc *q, int a, int b, int c,
+		const struct workarea *wa)
 {
 	struct quirc_point h0, hd;
 	int i;
@@ -944,7 +1036,7 @@ static void record_qr_grid(struct quirc *q, int a, int b, int c)
 	/* On V2+ grids, we should use the alignment pattern. */
 	if (qr->grid_size > 21) {
 		/* Try to find the actual location of the alignment pattern. */
-		find_alignment_pattern(q, qr_index);
+		find_alignment_pattern(q, qr_index, wa);
 
 		/* Find the point of the alignment pattern closest to the
 		 * top-left of the QR grid.
@@ -964,10 +1056,10 @@ static void record_qr_grid(struct quirc *q, int a, int b, int c)
 
 			flood_fill_seed(q, reg->seed.x, reg->seed.y,
 					qr->align_region, QUIRC_PIXEL_BLACK,
-					NULL, NULL, 0);
+					NULL, NULL, wa);
 			flood_fill_seed(q, reg->seed.x, reg->seed.y,
 					QUIRC_PIXEL_BLACK, qr->align_region,
-					find_leftmost_to_line, &psd, 0);
+					find_leftmost_to_line, &psd, wa);
 		}
 	}
 
@@ -995,7 +1087,8 @@ struct neighbour_list {
 
 static void test_neighbours(struct quirc *q, int i,
 			    const struct neighbour_list *hlist,
-			    const struct neighbour_list *vlist)
+			    const struct neighbour_list *vlist,
+				const struct workarea *wa)
 {
 	int j, k;
 	double best_score = 0.0;
@@ -1021,10 +1114,10 @@ static void test_neighbours(struct quirc *q, int i,
 	if (best_h < 0 || best_v < 0)
 		return;
 
-	record_qr_grid(q, best_h, i, best_v);
+	record_qr_grid(q, best_h, i, best_v, wa);
 }
 
-static void test_grouping(struct quirc *q, int i)
+static void test_grouping(struct quirc *q, int i, const struct workarea *wa)
 {
 	struct quirc_capstone *c1 = &q->capstones[i];
 	int j;
@@ -1070,7 +1163,7 @@ static void test_grouping(struct quirc *q, int i)
 	if (!(hlist.count && vlist.count))
 		return;
 
-	test_neighbours(q, i, &hlist, &vlist);
+	test_neighbours(q, i, &hlist, &vlist, wa);
 }
 
 static void pixels_setup(struct quirc *q, uint8_t threshold)
@@ -1102,18 +1195,30 @@ uint8_t *quirc_begin(struct quirc *q, int *w, int *h)
 	return q->image;
 }
 
-void quirc_end(struct quirc *q)
+void quirc_end_with_workarea(struct quirc *q,
+			void *workarea, size_t workarea_size)
 {
+	struct workarea wa;
 	int i;
 
 	uint8_t threshold = otsu(q);
 	pixels_setup(q, threshold);
 
+	wa.p = workarea;
+	wa.len = workarea_size;
+
 	for (i = 0; i < q->h; i++)
-		finder_scan(q, i);
+		finder_scan(q, i, &wa);
 
 	for (i = 0; i < q->num_capstones; i++)
-		test_grouping(q, i);
+		test_grouping(q, i, &wa);
+}
+
+void quirc_end(struct quirc *q)
+{
+	struct flood_fill_vars stack[FLOOD_FILL_MAX_DEPTH];
+
+	quirc_end_with_workarea(q, stack, sizeof(stack));
 }
 
 void quirc_extract(const struct quirc *q, int index,
