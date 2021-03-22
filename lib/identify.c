@@ -122,52 +122,99 @@ static void perspective_unmap(const double *c,
  * Span-based floodfill routine
  */
 
-#define FLOOD_FILL_MAX_DEPTH		4096
-
 typedef void (*span_func_t)(void *user_data, int y, int left, int right);
 
-static void flood_fill_seed(struct quirc *q, int x, int y, int from, int to,
-			    span_func_t func, void *user_data,
-			    int depth)
+static void flood_fill_seed(struct quirc *q,
+			    int x0, int y0,
+			    int from, int to,
+			    span_func_t func, void *user_data)
 {
-	int left = x;
-	int right = x;
+	struct quirc_flood_fill_vars *const stack = q->flood_fill_vars;
+	const size_t stack_size = q->num_flood_fill_vars;
+	const struct quirc_flood_fill_vars *const last_vars =
+	    &stack[stack_size - 1];
+
+	struct quirc_flood_fill_vars *vars;
+	struct quirc_flood_fill_vars *next_vars;
 	int i;
-	quirc_pixel_t *row = q->pixels + y * q->w;
+	quirc_pixel_t *row;
 
-	if (depth >= FLOOD_FILL_MAX_DEPTH)
-		return;
+	/* Set up the first context  */
+	next_vars = stack;
+	next_vars->x = x0;
+	next_vars->y = y0;
 
-	while (left > 0 && row[left - 1] == from)
-		left--;
+call:
+	vars = next_vars;
+	vars->left = vars->x;
+	vars->right = vars->x;
 
-	while (right < q->w - 1 && row[right + 1] == from)
-		right++;
+	row = q->pixels + vars->y * q->w;
+
+	while (vars->left > 0 && row[vars->left - 1] == from)
+		vars->left--;
+
+	while (vars->right < q->w - 1 && row[vars->right + 1] == from)
+		vars->right++;
 
 	/* Fill the extent */
-	for (i = left; i <= right; i++)
+	for (i = vars->left; i <= vars->right; i++)
 		row[i] = to;
 
 	if (func)
-		func(user_data, y, left, right);
+		func(user_data, vars->y, vars->left, vars->right);
 
-	/* Seed new flood-fills */
-	if (y > 0) {
-		row = q->pixels + (y - 1) * q->w;
-
-		for (i = left; i <= right; i++)
-			if (row[i] == from)
-				flood_fill_seed(q, i, y - 1, from, to,
-						func, user_data, depth + 1);
+	if (vars == last_vars) {
+		return;
 	}
 
-	if (y < q->h - 1) {
-		row = q->pixels + (y + 1) * q->w;
+	/* Seed new flood-fills */
+	if (vars->y > 0) {
+		row = q->pixels + (vars->y - 1) * q->w;
 
-		for (i = left; i <= right; i++)
-			if (row[i] == from)
-				flood_fill_seed(q, i, y + 1, from, to,
-						func, user_data, depth + 1);
+		for (i = vars->left; i <= vars->right; i++)
+			if (row[i] == from) {
+				/* Save the current context */
+				vars->i = i;
+				vars->pc = 1;
+
+				/* Set up the next context */
+				next_vars = vars + 1;
+				next_vars->x = i;
+				next_vars->y = vars->y - 1;
+				goto call;
+return_from_call1: ;
+			}
+	}
+
+	if (vars->y < q->h - 1) {
+		row = q->pixels + (vars->y + 1) * q->w;
+
+		for (i = vars->left; i <= vars->right; i++)
+			if (row[i] == from) {
+				/* Save the current context */
+				vars->i = i;
+				vars->pc = 2;
+
+				/* Set up the next context */
+				next_vars = vars + 1;
+				next_vars->x = i;
+				next_vars->y = vars->y + 1;
+				goto call;
+return_from_call2: ;
+			}
+	}
+
+	if (vars > stack) {
+		/* Restore the previous context */
+		vars--;
+		i = vars->i;
+		if (vars->pc == 1) {
+			row = q->pixels + (vars->y - 1) * q->w;
+			goto return_from_call1;
+		}
+		row = q->pixels + (vars->y + 1) * q->w;
+		goto return_from_call2;
 	}
 }
 
@@ -260,7 +307,7 @@ static int region_code(struct quirc *q, int x, int y)
 	box->seed.y = y;
 	box->capstone = -1;
 
-	flood_fill_seed(q, x, y, pixel, region, area_count, box, 0);
+	flood_fill_seed(q, x, y, pixel, region, area_count, box);
 
 	return region;
 }
@@ -330,7 +377,7 @@ static void find_region_corners(struct quirc *q,
 	psd.scores[0] = -1;
 	flood_fill_seed(q, region->seed.x, region->seed.y,
 			rcode, QUIRC_PIXEL_BLACK,
-			find_one_corner, &psd, 0);
+			find_one_corner, &psd);
 
 	psd.ref.x = psd.corners[0].x - psd.ref.x;
 	psd.ref.y = psd.corners[0].y - psd.ref.y;
@@ -348,7 +395,7 @@ static void find_region_corners(struct quirc *q,
 
 	flood_fill_seed(q, region->seed.x, region->seed.y,
 			QUIRC_PIXEL_BLACK, rcode,
-			find_other_corners, &psd, 0);
+			find_other_corners, &psd);
 }
 
 static void record_capstone(struct quirc *q, int ring, int stone)
@@ -966,10 +1013,10 @@ static void record_qr_grid(struct quirc *q, int a, int b, int c)
 
 			flood_fill_seed(q, reg->seed.x, reg->seed.y,
 					qr->align_region, QUIRC_PIXEL_BLACK,
-					NULL, NULL, 0);
+					NULL, NULL);
 			flood_fill_seed(q, reg->seed.x, reg->seed.y,
 					QUIRC_PIXEL_BLACK, qr->align_region,
-					find_leftmost_to_line, &psd, 0);
+					find_leftmost_to_line, &psd);
 		}
 	}
 
