@@ -30,9 +30,14 @@ LIB_OBJ = \
 DEMO_OBJ = \
     demo/camera.o \
     demo/mjpeg.o \
-    demo/convert.o \
+    demo/convert.o
+DEMO_UTIL_OBJ = \
     demo/dthash.o \
     demo/demoutil.o
+
+OPENCV_CFLAGS != pkg-config --cflags opencv4
+OPENCV_LIBS != pkg-config --libs opencv4
+QUIRC_CXXFLAGS = $(QUIRC_CFLAGS) $(OPENCV_CFLAGS) --std=c++17
 
 all: libquirc.so qrtest inspect quirc-demo quirc-scanner
 
@@ -42,11 +47,14 @@ qrtest: tests/dbgutil.o tests/qrtest.o libquirc.a
 inspect: tests/dbgutil.o tests/inspect.o libquirc.a
 	$(CC) -o $@ tests/dbgutil.o tests/inspect.o libquirc.a $(LDFLAGS) -lm -ljpeg -lpng $(SDL_LIBS) -lSDL_gfx
 
-quirc-demo: $(DEMO_OBJ) demo/demo.o libquirc.a
-	$(CC) -o $@ $(DEMO_OBJ) demo/demo.o libquirc.a $(LDFLAGS) -lm -ljpeg $(SDL_LIBS) -lSDL_gfx
+quirc-demo: $(DEMO_OBJ) $(DEMO_UTIL_OBJ) demo/demo.o libquirc.a
+	$(CC) -o $@ $(DEMO_OBJ) $(DEMO_UTIL_OBJ) demo/demo.o libquirc.a $(LDFLAGS) -lm -ljpeg $(SDL_LIBS) -lSDL_gfx
 
-quirc-scanner: $(DEMO_OBJ) demo/scanner.o libquirc.a
-	$(CC) -o $@ $(DEMO_OBJ) demo/scanner.o libquirc.a $(LDFLAGS) -lm -ljpeg
+quirc-demo-opencv: $(DEMO_UTIL_OBJ) demo/demo_opencv.o libquirc.a
+	$(CXX) -o $@ $(DEMO_UTIL_OBJ) demo/demo_opencv.o libquirc.a $(LDFLAGS) -lm -ljpeg $(OPENCV_LIBS)
+
+quirc-scanner: $(DEMO_OBJ) $(DEMO_UTIL_OBJ) demo/scanner.o libquirc.a
+	$(CC) -o $@ $(DEMO_OBJ) $(DEMO_UTIL_OBJ) demo/scanner.o libquirc.a $(LDFLAGS) -lm -ljpeg
 
 libquirc.a: $(LIB_OBJ)
 	rm -f $@
@@ -62,12 +70,17 @@ libquirc.so.$(LIB_VERSION): $(LIB_OBJ)
 .c.o:
 	$(CC) $(QUIRC_CFLAGS) -o $@ -c $<
 
+.SUFFIXES: .cxx
+.cxx.o:
+	$(CXX) $(QUIRC_CXXFLAGS) -o $@ -c $<
+
 install: libquirc.a libquirc.so.$(LIB_VERSION) quirc-demo quirc-scanner
 	install -o root -g root -m 0644 lib/quirc.h $(DESTDIR)$(PREFIX)/include
 	install -o root -g root -m 0644 libquirc.a $(DESTDIR)$(PREFIX)/lib
 	install -o root -g root -m 0755 libquirc.so.$(LIB_VERSION) \
 		$(DESTDIR)$(PREFIX)/lib
 	install -o root -g root -m 0755 quirc-demo $(DESTDIR)$(PREFIX)/bin
+	# install -o root -g root -m 0755 quirc-demo-opencv $(DESTDIR)$(PREFIX)/bin
 	install -o root -g root -m 0755 quirc-scanner $(DESTDIR)$(PREFIX)/bin
 
 uninstall:
@@ -75,6 +88,7 @@ uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/lib/libquirc.so.$(LIB_VERSION)
 	rm -f $(DESTDIR)$(PREFIX)/lib/libquirc.a
 	rm -f $(DESTDIR)$(PREFIX)/bin/quirc-demo
+	rm -f $(DESTDIR)$(PREFIX)/bin/quirc-demo-opencv
 	rm -f $(DESTDIR)$(PREFIX)/bin/quirc-scanner
 
 clean:
@@ -85,4 +99,5 @@ clean:
 	rm -f qrtest
 	rm -f inspect
 	rm -f quirc-demo
+	rm -f quirc-demo-opencv
 	rm -f quirc-scanner
