@@ -71,6 +71,13 @@ additional information on stdout.
 
 This requires: libjpeg, libpng, SDL
 
+### inspect-opencv
+
+A test similar to `inspect`.
+But this version uses OpenCV instead of other libraries.
+
+This requires: libjpeg, libpng, OpenCV
+
 Build-time requirements
 -----------------------
 
@@ -109,6 +116,7 @@ are unable to build everything:
 * libquirc.so
 * qrtest
 * inspect
+* inspect-opencv
 * quirc-scanner
 * quirc-demo
 * quirc-demo-opencv
