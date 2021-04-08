@@ -51,7 +51,7 @@ quirc-demo: $(DEMO_OBJ) $(DEMO_UTIL_OBJ) demo/demo.o libquirc.a
 	$(CC) -o $@ $(DEMO_OBJ) $(DEMO_UTIL_OBJ) demo/demo.o libquirc.a $(LDFLAGS) -lm -ljpeg $(SDL_LIBS) -lSDL_gfx
 
 quirc-demo-opencv: $(DEMO_UTIL_OBJ) demo/demo_opencv.o libquirc.a
-	$(CXX) -o $@ $(DEMO_UTIL_OBJ) demo/demo_opencv.o libquirc.a $(LDFLAGS) -lm -ljpeg $(OPENCV_LIBS)
+	$(CXX) -o $@ $(DEMO_UTIL_OBJ) demo/demo_opencv.o libquirc.a $(LDFLAGS) -lm $(OPENCV_LIBS)
 
 quirc-scanner: $(DEMO_OBJ) $(DEMO_UTIL_OBJ) demo/scanner.o libquirc.a
 	$(CC) -o $@ $(DEMO_OBJ) $(DEMO_UTIL_OBJ) demo/scanner.o libquirc.a $(LDFLAGS) -lm -ljpeg
