@@ -40,6 +40,13 @@ displayed on the image and printed on stdout.
 
 This requires SDL and V4L2.
 
+### quirc-demo-opencv
+
+A demo similar to `quirc-demo`.
+But this version uses OpenCV instead of other libraries.
+
+This requires OpenCV.
+
 ### quirc-scanner
 
 This program turns your camera into a barcode scanner. It's almost the same as
@@ -81,6 +88,7 @@ are unable to build everything:
 * inspect
 * quirc-scanner
 * quirc-demo
+* quirc-demo-opencv
 
 Library use
 -----------
