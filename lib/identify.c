@@ -177,13 +177,13 @@ static void flood_fill_seed(struct quirc *q, int x, int y, int from, int to,
 
 static uint8_t otsu(const struct quirc *q)
 {
-	int numPixels = q->w * q->h;
+	unsigned int numPixels = q->w * q->h;
 
 	// Calculate histogram
 	unsigned int histogram[UINT8_MAX + 1];
 	(void)memset(histogram, 0, sizeof(histogram));
 	uint8_t* ptr = q->image;
-	int length = numPixels;
+	unsigned int length = numPixels;
 	while (length--) {
 		uint8_t value = *ptr++;
 		histogram[value]++;
@@ -198,7 +198,7 @@ static uint8_t otsu(const struct quirc *q)
 
 	// Compute threshold
 	double sumB = 0;
-	int q1 = 0;
+	unsigned int q1 = 0;
 	double max = 0;
 	uint8_t threshold = 0;
 	for (i = 0; i <= UINT8_MAX; ++i) {
@@ -208,7 +208,7 @@ static uint8_t otsu(const struct quirc *q)
 			continue;
 
 		// Weighted foreground
-		const int q2 = numPixels - q1;
+		const unsigned int q2 = numPixels - q1;
 		if (q2 == 0)
 			break;
 
