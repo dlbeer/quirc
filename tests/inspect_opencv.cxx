@@ -16,10 +16,54 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <SDL.h>
-#include <SDL_gfxPrimitives.h>
+
+#include <opencv2/videoio.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/highgui.hpp>
+
+using namespace cv;
+
 #include "quirc_internal.h"
 #include "dbgutil.h"
+
+/*
+ * Macros to conver a color from the SDL_gfxprimitive style format.
+ * bpp=4, little-endian.
+ */
+
+#define	R(c)	((c) & 0xff)
+#define	G(c)	((c >> 8) & 0xff)
+#define	B(c)	((c >> 16) & 0xff)
+#define	COLOR(c)	Scalar(B(c), G(c), R(c))
+
+static void stringColor(Mat &screen, int x, int y, const char *text,
+			uint32_t color)
+{
+	static const int font = FONT_HERSHEY_PLAIN;
+	static const int thickness = 4;
+	static const double font_scale = 4.0;
+
+	putText(screen, text, Point(x, y), font, font_scale, COLOR(color),
+		thickness);
+}
+
+static void pixelColor(Mat &screen, int x, int y, uint32_t color)
+{
+	if (x < 0 || y < 0 || x >= screen.cols || y >= screen.rows) {
+		return;
+	}
+
+	Vec3b &screen_pixel = screen.at<Vec3b>(y, x);
+	screen_pixel[0] = B(color);
+	screen_pixel[1] = G(color);
+	screen_pixel[2] = R(color);
+}
+
+static void lineColor(Mat &screen, int x1, int y1, int x2, int y2,
+		      uint32_t color)
+{
+	line(screen, Point(x1, y1), Point(x2, y2), COLOR(color), 8);
+}
 
 static void dump_info(struct quirc *q)
 {
@@ -53,17 +97,12 @@ static void dump_info(struct quirc *q)
 	}
 }
 
-static void draw_frame(SDL_Surface *screen, struct quirc *q)
+static void draw_frame(Mat &screen, struct quirc *q)
 {
-	uint8_t *pix;
 	uint8_t *raw = q->image;
 	int x, y;
 
-	SDL_LockSurface(screen);
-	pix = screen->pixels;
 	for (y = 0; y < q->h; y++) {
-		uint32_t *row = (uint32_t *)pix;
-
 		for (x = 0; x < q->w; x++) {
 			uint8_t v = *(raw++);
 			uint32_t color = (v << 16) | (v << 8) | v;
@@ -86,15 +125,12 @@ static void draw_frame(SDL_Surface *screen, struct quirc *q)
 				break;
 			}
 
-			*(row++) = color;
+			pixelColor(screen, x, y, color);
 		}
-
-		pix += screen->pitch;
 	}
-	SDL_UnlockSurface(screen);
 }
 
-static void draw_blob(SDL_Surface *screen, int x, int y)
+static void draw_blob(Mat &screen, int x, int y)
 {
 	int i, j;
 
@@ -103,7 +139,7 @@ static void draw_blob(SDL_Surface *screen, int x, int y)
 			pixelColor(screen, x + i, y + j, 0x0000ffff);
 }
 
-static void draw_mark(SDL_Surface *screen, int x, int y)
+static void draw_mark(Mat &screen, int x, int y)
 {
 	pixelColor(screen, x, y, 0xff0000ff);
 	pixelColor(screen, x + 1, y, 0xff0000ff);
@@ -112,7 +148,7 @@ static void draw_mark(SDL_Surface *screen, int x, int y)
 	pixelColor(screen, x, y - 1, 0xff0000ff);
 }
 
-static void draw_capstone(SDL_Surface *screen, struct quirc *q, int index)
+static void draw_capstone(Mat &screen, struct quirc *q, int index)
 {
 	struct quirc_capstone *cap = &q->capstones[index];
 	int j;
@@ -146,7 +182,7 @@ static void perspective_map(const double *c,
 	ret->y = rint(y);
 }
 
-static void draw_grid(SDL_Surface *screen, struct quirc *q, int index)
+static void draw_grid(Mat &screen, struct quirc *q, int index)
 {
 	struct quirc_grid *qr = &q->grids[index];
 	int x, y;
@@ -181,42 +217,21 @@ static void draw_grid(SDL_Surface *screen, struct quirc *q, int index)
 	}
 }
 
-static int sdl_examine(struct quirc *q)
+static int opencv_examine(struct quirc *q)
 {
-	SDL_Surface *screen;
-	SDL_Event ev;
+	static const char *win = "inspect-opencv";
+	Mat frame(q->h, q->w, CV_8UC3);
+	int i;
 
-	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-		fprintf(stderr, "couldn't init SDL: %s\n", SDL_GetError());
-		return -1;
-	}
+	draw_frame(frame, q);
+	for (i = 0; i < q->num_capstones; i++)
+	    draw_capstone(frame, q, i);
+	for (i = 0; i < q->num_grids; i++)
+	    draw_grid(frame, q, i);
 
-	screen = SDL_SetVideoMode(q->w, q->h, 32, SDL_SWSURFACE);
-	if (!screen) {
-		fprintf(stderr, "couldn't init video mode: %s\n",
-			SDL_GetError());
-		return -1;
-	}
+	imshow(win, frame);
+	waitKey(0);
 
-	while (SDL_WaitEvent(&ev) >= 0) {
-		int i;
-
-		if (ev.type == SDL_QUIT)
-			break;
-
-		if (ev.type == SDL_KEYDOWN &&
-		    ev.key.keysym.sym == 'q')
-			break;
-
-		draw_frame(screen, q);
-		for (i = 0; i < q->num_capstones; i++)
-			draw_capstone(screen, q, i);
-		for (i = 0; i < q->num_grids; i++)
-			draw_grid(screen, q, i);
-		SDL_Flip(screen);
-	}
-
-	SDL_Quit();
 	return 0;
 }
 
@@ -254,7 +269,7 @@ int main(int argc, char **argv)
 	quirc_end(q);
 	dump_info(q);
 
-	if (sdl_examine(q) < 0) {
+	if (opencv_examine(q) < 0) {
 		quirc_destroy(q);
 		return -1;
 	}
