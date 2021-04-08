@@ -47,6 +47,9 @@ qrtest: tests/dbgutil.o tests/qrtest.o libquirc.a
 inspect: tests/dbgutil.o tests/inspect.o libquirc.a
 	$(CC) -o $@ tests/dbgutil.o tests/inspect.o libquirc.a $(LDFLAGS) -lm -ljpeg -lpng $(SDL_LIBS) -lSDL_gfx
 
+inspect-opencv: tests/dbgutil.o tests/inspect_opencv.o libquirc.a
+	$(CXX) -o $@ tests/dbgutil.o tests/inspect_opencv.o libquirc.a $(LDFLAGS) -lm -ljpeg -lpng $(OPENCV_LIBS)
+
 quirc-demo: $(DEMO_OBJ) $(DEMO_UTIL_OBJ) demo/demo.o libquirc.a
 	$(CC) -o $@ $(DEMO_OBJ) $(DEMO_UTIL_OBJ) demo/demo.o libquirc.a $(LDFLAGS) -lm -ljpeg $(SDL_LIBS) -lSDL_gfx
 
@@ -98,6 +101,7 @@ clean:
 	rm -f libquirc.so.$(LIB_VERSION)
 	rm -f qrtest
 	rm -f inspect
+	rm -f inspect-opencv
 	rm -f quirc-demo
 	rm -f quirc-demo-opencv
 	rm -f quirc-scanner
