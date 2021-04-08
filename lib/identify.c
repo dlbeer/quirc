@@ -190,14 +190,14 @@ static uint8_t otsu(const struct quirc *q)
 	}
 
 	// Calculate weighted sum of histogram values
-	unsigned int sum = 0;
+	double sum = 0;
 	unsigned int i = 0;
 	for (i = 0; i <= UINT8_MAX; ++i) {
 		sum += i * histogram[i];
 	}
 
 	// Compute threshold
-	int sumB = 0;
+	double sumB = 0;
 	int q1 = 0;
 	double max = 0;
 	uint8_t threshold = 0;
@@ -213,8 +213,8 @@ static uint8_t otsu(const struct quirc *q)
 			break;
 
 		sumB += i * histogram[i];
-		const double m1 = (double)sumB / q1;
-		const double m2 = ((double)sum - sumB) / q2;
+		const double m1 = sumB / q1;
+		const double m2 = (sum - sumB) / q2;
 		const double m1m2 = m1 - m2;
 		const double variance = m1m2 * m1m2 * q1 * q2;
 		if (variance >= max) {
