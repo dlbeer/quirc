@@ -28,8 +28,7 @@ a good choice for this purpose:
 
 The distribution comes with, in addition to the library, several test programs.
 While the core library is very portable, these programs have some additional
-dependencies. All of them require libjpeg, and two (`quirc-demo` and `inspect`)
-require SDL. The camera demos use Linux-specific APIs:
+dependencies as documented below.
 
 ### quirc-demo
 
@@ -38,7 +37,14 @@ video stream is displayed on screen as it's received, and any QR codes
 recognised are highlighted in the image, with the decoded information both
 displayed on the image and printed on stdout.
 
-This requires SDL and V4L2.
+This requires: libjpeg, libpng, SDL, V4L2
+
+### quirc-demo-opencv
+
+A demo similar to `quirc-demo`.
+But this version uses OpenCV instead of other libraries.
+
+This requires: OpenCV
 
 ### quirc-scanner
 
@@ -46,7 +52,7 @@ This program turns your camera into a barcode scanner. It's almost the same as
 the `demo` application, but it doesn't display the video stream, and thus
 doesn't require a graphical display.
 
-This requires V4L2.
+This requires: libjpeg, V4L2
 
 ### qrtest
 
@@ -55,13 +61,15 @@ tree containing a bunch of JPEG images, it will attempt to locate and decode QR
 codes in each image. Speed and success statistics are collected and printed on
 stdout.
 
+This requires: libjpeg, libpng
+
 ### inspect
 
 This test is used for debugging. Given a single JPEG image, it will display a
 diagram showing the internal state of the decoder as well as printing
 additional information on stdout.
 
-This requires SDL.
+This requires: libjpeg, libpng, SDL
 
 Installation
 ------------
@@ -81,6 +89,7 @@ are unable to build everything:
 * inspect
 * quirc-scanner
 * quirc-demo
+* quirc-demo-opencv
 
 Library use
 -----------
