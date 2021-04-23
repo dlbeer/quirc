@@ -438,7 +438,7 @@ static void finder_scan(struct quirc *q, unsigned int y)
 			run_count++;
 
 			if (!color && run_count >= 5) {
-				static unsigned int check[5] = {1, 1, 3, 1, 1};
+				static const unsigned int check[5] = {1, 1, 3, 1, 1};
 				unsigned int avg, err;
 				unsigned int i;
 				int ok = 1;
