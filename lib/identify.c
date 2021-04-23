@@ -380,7 +380,8 @@ static void record_capstone(struct quirc *q, int ring, int stone)
 	perspective_map(capstone->c, 3.5, 3.5, &capstone->center);
 }
 
-static void test_capstone(struct quirc *q, int x, int y, int *pb)
+static void test_capstone(struct quirc *q, unsigned int x, unsigned int y,
+			  unsigned int *pb)
 {
 	int ring_right = region_code(q, x - pb[4], y);
 	int stone = region_code(q, x - pb[4] - pb[3] - pb[2], y);
@@ -389,7 +390,7 @@ static void test_capstone(struct quirc *q, int x, int y, int *pb)
 				    y);
 	struct quirc_region *stone_reg;
 	struct quirc_region *ring_reg;
-	int ratio;
+	unsigned int ratio;
 
 	if (ring_left < 0 || ring_right < 0 || stone < 0)
 		return;
@@ -417,14 +418,14 @@ static void test_capstone(struct quirc *q, int x, int y, int *pb)
 	record_capstone(q, ring_left, stone);
 }
 
-static void finder_scan(struct quirc *q, int y)
+static void finder_scan(struct quirc *q, unsigned int y)
 {
 	quirc_pixel_t *row = q->pixels + y * q->w;
-	int x;
+	unsigned int x;
 	int last_color = 0;
-	int run_length = 0;
-	int run_count = 0;
-	int pb[5];
+	unsigned int run_length = 0;
+	unsigned int run_count = 0;
+	unsigned int pb[5];
 
 	memset(pb, 0, sizeof(pb));
 	for (x = 0; x < q->w; x++) {
@@ -437,9 +438,9 @@ static void finder_scan(struct quirc *q, int y)
 			run_count++;
 
 			if (!color && run_count >= 5) {
-				static int check[5] = {1, 1, 3, 1, 1};
-				int avg, err;
-				int i;
+				static unsigned int check[5] = {1, 1, 3, 1, 1};
+				unsigned int avg, err;
+				unsigned int i;
 				int ok = 1;
 
 				avg = (pb[0] + pb[1] + pb[3] + pb[4]) / 4;
@@ -1024,7 +1025,7 @@ static void test_neighbours(struct quirc *q, int i,
 	record_qr_grid(q, best_h, i, best_v);
 }
 
-static void test_grouping(struct quirc *q, int i)
+static void test_grouping(struct quirc *q, unsigned int i)
 {
 	struct quirc_capstone *c1 = &q->capstones[i];
 	int j;
