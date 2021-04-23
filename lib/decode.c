@@ -399,7 +399,7 @@ static quirc_decode_error_t correct_format(uint16_t *f_ret)
  */
 
 struct datastream {
-	uint8_t		raw[QUIRC_MAX_PAYLOAD];
+	uint8_t		*raw;
 	int		data_bits;
 	int		ptr;
 
@@ -905,10 +905,22 @@ quirc_decode_error_t quirc_decode(const struct quirc_code *code,
 	if (err)
 		return err;
 
+	/*
+	 * Borrow data->payload to store the raw bits.
+	 * It's only used during read_data + coddestream_ecc below.
+	 *
+	 * This trick saves the size of struct datastream, which we allocate
+	 * on the stack.
+	 */
+
+	ds.raw = data->payload;
+
 	read_data(code, data, &ds);
 	err = codestream_ecc(data, &ds);
 	if (err)
 		return err;
+
+	ds.raw = NULL; /* We've done with this buffer. */
 
 	err = decode_payload(data, &ds);
 	if (err)
