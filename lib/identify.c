@@ -438,17 +438,18 @@ static void finder_scan(struct quirc *q, unsigned int y)
 			run_count++;
 
 			if (!color && run_count >= 5) {
+				const int scale = 16;
 				static const unsigned int check[5] = {1, 1, 3, 1, 1};
 				unsigned int avg, err;
 				unsigned int i;
 				int ok = 1;
 
-				avg = (pb[0] + pb[1] + pb[3] + pb[4]) / 4;
+				avg = (pb[0] + pb[1] + pb[3] + pb[4]) * scale / 4;
 				err = avg * 3 / 4;
 
 				for (i = 0; i < 5; i++)
-					if (pb[i] < check[i] * avg - err ||
-					    pb[i] > check[i] * avg + err)
+					if (pb[i] * scale < check[i] * avg - err ||
+					    pb[i] * scale > check[i] * avg + err)
 						ok = 0;
 
 				if (ok)
