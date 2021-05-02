@@ -71,6 +71,28 @@ additional information on stdout.
 
 This requires: libjpeg, libpng, SDL
 
+Build-time requirements
+-----------------------
+
+### make
+
+While we are trying to keep our makefiles portable,
+it might be incompatible with some versions of make.
+
+#### GNU make
+
+Version 4.x and later works. We recommend to use it.
+
+Version prior to 4.0 doesn't work because it doesn't support `!=`.
+
+*Note*: macOS's default version of make is GNU make 3.81 as of writing this.
+
+#### BSD make
+
+It also works.
+You might need to specify the `-r` make option because some of
+the default macros like CFLAGS from sys.mk can cause unintended effects.
+
 Installation
 ------------
 To build the library and associated demos/tests, type `make`. If you need to
