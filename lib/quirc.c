@@ -50,6 +50,7 @@ int quirc_resize(struct quirc *q, int w, int h)
 	uint8_t		*image  = NULL;
 	quirc_pixel_t	*pixels = NULL;
 	size_t num_vars;
+	size_t vars_byte_size;
 	struct quirc_flood_fill_vars *vars = NULL;
 
 	/*
@@ -100,8 +101,19 @@ int quirc_resize(struct quirc *q, int w, int h)
 	 * - the maximum height of rings would be about 1/3 of the image height.
 	 */
 
-	num_vars = h * 2 / 3;
-	vars = malloc(sizeof(*vars) * num_vars);
+	if ((size_t)h * 2 / 2 != h) {
+		goto fail; /* size_t overflow */
+	}
+	num_vars = (size_t)h * 2 / 3;
+	if (num_vars == 0) {
+		num_vars = 1;
+	}
+
+	vars_byte_size = sizeof(*vars) * num_vars;
+	if (vars_byte_size / sizeof(*vars) != num_vars) {
+		goto fail; /* size_t overflow */
+	}
+	vars = malloc(vars_byte_size);
 	if (!vars)
 		goto fail;
 
