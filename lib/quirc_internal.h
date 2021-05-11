@@ -17,9 +17,12 @@
 #ifndef QUIRC_INTERNAL_H_
 #define QUIRC_INTERNAL_H_
 
+#include <assert.h>
 #include <stdlib.h>
 
 #include "quirc.h"
+
+#define QUIRC_ASSERT(a)	assert(a)
 
 #define QUIRC_PIXEL_WHITE	0
 #define QUIRC_PIXEL_BLACK	1
