@@ -78,7 +78,6 @@ struct quirc_grid {
 };
 
 struct quirc_flood_fill_vars {
-	int x;
 	int y;
 	int right;
 	int left;

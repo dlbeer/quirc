@@ -170,14 +170,14 @@ static void flood_fill_seed(struct quirc *q,
 
 	/* Set up the first context  */
 	next_vars = stack;
-	next_vars->x = x0;
+	next_vars->left = x0;
 	next_vars->y = y0;
 
 call:
 	vars = next_vars;
 
 	/* Fill the extent */
-	flood_fill_line(q, vars->x, vars->y, from, to, &vars->left,
+	flood_fill_line(q, vars->left, vars->y, from, to, &vars->left,
 			&vars->right);
 
 	if (func)
@@ -199,7 +199,7 @@ call:
 
 				/* Set up the next context */
 				next_vars = vars + 1;
-				next_vars->x = i;
+				next_vars->left = i;
 				next_vars->y = vars->y - 1;
 				goto call;
 return_from_call1: ;
@@ -217,7 +217,7 @@ return_from_call1: ;
 
 				/* Set up the next context */
 				next_vars = vars + 1;
-				next_vars->x = i;
+				next_vars->left = i;
 				next_vars->y = vars->y + 1;
 				goto call;
 return_from_call2: ;
