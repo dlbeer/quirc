@@ -133,10 +133,11 @@ static void flood_fill_line(struct quirc *q, int x, int y,
 	int right;
 	int i;
 
+	row = q->pixels + y * q->w;
+	QUIRC_ASSERT(row[x] == from);
+
 	left = x;
 	right = x;
-
-	row = q->pixels + y * q->w;
 
 	while (left > 0 && row[left - 1] == from)
 		left--;
@@ -162,6 +163,9 @@ static void flood_fill_seed(struct quirc *q,
 	const size_t stack_size = q->num_flood_fill_vars;
 	const struct quirc_flood_fill_vars *const last_vars =
 	    &stack[stack_size - 1];
+
+	QUIRC_ASSERT(from != to);
+	QUIRC_ASSERT(q->pixels[y0 * q->w + x0] == from);
 
 	struct quirc_flood_fill_vars *vars;
 	struct quirc_flood_fill_vars *next_vars;
