@@ -180,29 +180,21 @@ static void flood_fill_seed(struct quirc *q,
 	next_vars->left_up = x0;
 	next_vars->y = y0;
 
-call:
-	vars = next_vars;
-
-	/*
-	 * Note about inputs:
-	 *
-	 * - vars->left_up contains x value to look at.
-	 * - vars->left_down is still a garbage here.
-	 */
-
 	/* Fill the extent */
-	flood_fill_line(q, vars->left_up, vars->y, from, to,
+	flood_fill_line(q, next_vars->left_up, next_vars->y, from, to,
 			func, user_data,
-			&vars->left_up, &vars->right);
+			&next_vars->left_up, &next_vars->right);
+	next_vars->left_down = next_vars->left_up;
+
+call:
+return_from_call:
+	vars = next_vars;
 
 	if (vars == last_vars) {
 		return;
 	}
 
-	vars->left_down = vars->left_up;
-
 	/* Seed new flood-fills */
-return_from_call:
 	if (vars->y > 0) {
 		row = q->pixels + (vars->y - 1) * q->w;
 
@@ -212,6 +204,16 @@ return_from_call:
 				next_vars = vars + 1;
 				next_vars->left_up = vars->left_up;
 				next_vars->y = vars->y - 1;
+
+				/* Fill the extent */
+				flood_fill_line(q,
+						next_vars->left_up,
+						next_vars->y, from, to,
+						func, user_data,
+						&next_vars->left_up,
+						&next_vars->right);
+				next_vars->left_down = next_vars->left_up;
+
 				goto call;
 			}
 			vars->left_up++;
@@ -227,6 +229,16 @@ return_from_call:
 				next_vars = vars + 1;
 				next_vars->left_up = vars->left_down;
 				next_vars->y = vars->y + 1;
+
+				/* Fill the extent */
+				flood_fill_line(q,
+						next_vars->left_up,
+						next_vars->y, from, to,
+						func, user_data,
+						&next_vars->left_up,
+						&next_vars->right);
+				next_vars->left_down = next_vars->left_up;
+
 				goto call;
 			}
 			vars->left_down++;
@@ -235,7 +247,7 @@ return_from_call:
 
 	if (vars > stack) {
 		/* Restore the previous context */
-		vars--;
+		next_vars = vars - 1;
 		goto return_from_call;
 	}
 }
