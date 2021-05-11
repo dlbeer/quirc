@@ -169,75 +169,72 @@ static void flood_fill_seed(struct quirc *q,
 
 	struct quirc_flood_fill_vars *vars;
 	struct quirc_flood_fill_vars *next_vars;
-	int i;
 	quirc_pixel_t *row;
 
 	/* Set up the first context  */
 	next_vars = stack;
-	next_vars->left = x0;
+	next_vars->left_up = x0;
 	next_vars->y = y0;
 
 call:
 	vars = next_vars;
 
+	/*
+	 * Note about inputs:
+	 *
+	 * - vars->left_up contains x value to look at.
+	 * - vars->left_down is still a garbage here.
+	 */
+
 	/* Fill the extent */
-	flood_fill_line(q, vars->left, vars->y, from, to, &vars->left,
+	flood_fill_line(q, vars->left_up, vars->y, from, to, &vars->left_up,
 			&vars->right);
 
 	if (func)
-		func(user_data, vars->y, vars->left, vars->right);
+		func(user_data, vars->y, vars->left_up, vars->right);
 
 	if (vars == last_vars) {
 		return;
 	}
 
+	vars->left_down = vars->left_up;
+
 	/* Seed new flood-fills */
+return_from_call:
 	if (vars->y > 0) {
 		row = q->pixels + (vars->y - 1) * q->w;
 
-		for (i = vars->left; i <= vars->right; i++)
-			if (row[i] == from) {
-				/* Save the current context */
-				vars->i = i;
-				vars->pc = 1;
-
+		while (vars->left_up <= vars->right) {
+			if (row[vars->left_up] == from) {
 				/* Set up the next context */
 				next_vars = vars + 1;
-				next_vars->left = i;
+				next_vars->left_up = vars->left_up;
 				next_vars->y = vars->y - 1;
 				goto call;
-return_from_call1: ;
 			}
+			vars->left_up++;
+		}
 	}
 
 	if (vars->y < q->h - 1) {
 		row = q->pixels + (vars->y + 1) * q->w;
 
-		for (i = vars->left; i <= vars->right; i++)
-			if (row[i] == from) {
-				/* Save the current context */
-				vars->i = i;
-				vars->pc = 2;
-
+		while (vars->left_down <= vars->right) {
+			if (row[vars->left_down] == from) {
 				/* Set up the next context */
 				next_vars = vars + 1;
-				next_vars->left = i;
+				next_vars->left_up = vars->left_down;
 				next_vars->y = vars->y + 1;
 				goto call;
-return_from_call2: ;
 			}
+			vars->left_down++;
+		}
 	}
 
 	if (vars > stack) {
 		/* Restore the previous context */
 		vars--;
-		i = vars->i;
-		if (vars->pc == 1) {
-			row = q->pixels + (vars->y - 1) * q->w;
-			goto return_from_call1;
-		}
-		row = q->pixels + (vars->y + 1) * q->w;
-		goto return_from_call2;
+		goto return_from_call;
 	}
 }
 

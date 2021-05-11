@@ -83,9 +83,8 @@ struct quirc_grid {
 struct quirc_flood_fill_vars {
 	int y;
 	int right;
-	int left;
-	int i;
-	int pc; /* caller id */
+	int left_up;
+	int left_down;
 };
 
 struct quirc {
