@@ -234,6 +234,13 @@ static void flood_fill_seed(struct quirc *q,
 		quirc_pixel_t *row;
 
 		if (vars == last_vars) {
+			/*
+			 * "Stack overflow".
+			 * Just stop and return.
+			 * This can be caused by very complex shapes in
+			 * the image, which is not likely a part of
+			 * a valid QR code anyway.
+			 */
 			break;
 		}
 
@@ -268,6 +275,7 @@ static void flood_fill_seed(struct quirc *q,
 			continue;
 		}
 
+		/* We've done. */
 		break;
 	}
 }
