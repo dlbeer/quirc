@@ -16,6 +16,7 @@
 
 #include <limits.h>
 #include <string.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <math.h>
 #include "quirc_internal.h"
@@ -213,9 +214,7 @@ static void flood_fill_seed(struct quirc *q,
 	QUIRC_ASSERT(from != to);
 	QUIRC_ASSERT(q->pixels[y0 * q->w + x0] == from);
 
-	struct quirc_flood_fill_vars *vars;
 	struct quirc_flood_fill_vars *next_vars;
-	quirc_pixel_t *row;
 
 	/* Set up the first context  */
 	next_vars = stack;
@@ -228,43 +227,46 @@ static void flood_fill_seed(struct quirc *q,
 			&next_vars->left_up, &next_vars->right);
 	next_vars->left_down = next_vars->left_up;
 
-call:
-return_from_call:
-	vars = next_vars;
+	while (true) {
+		struct quirc_flood_fill_vars * const vars = next_vars;
+		quirc_pixel_t *row;
 
-	if (vars == last_vars) {
-		return;
-	}
-
-	/* Seed new flood-fills */
-	if (vars->y > 0) {
-		row = q->pixels + (vars->y - 1) * q->w;
-
-		next_vars = flood_fill_call_next(q, row,
-						 from, to,
-						 func, user_data,
-						 vars, -1);
-		if (next_vars != NULL) {
-			goto call;
+		if (vars == last_vars) {
+			break;
 		}
-	}
 
-	if (vars->y < q->h - 1) {
-		row = q->pixels + (vars->y + 1) * q->w;
+		/* Seed new flood-fills */
+		if (vars->y > 0) {
+			row = q->pixels + (vars->y - 1) * q->w;
 
-		next_vars = flood_fill_call_next(q, row,
-						 from, to,
-						 func, user_data,
-						 vars, 1);
-		if (next_vars != NULL) {
-			goto call;
+			next_vars = flood_fill_call_next(q, row,
+							 from, to,
+							 func, user_data,
+							 vars, -1);
+			if (next_vars != NULL) {
+				continue;
+			}
 		}
-	}
 
-	if (vars > stack) {
-		/* Restore the previous context */
-		next_vars = vars - 1;
-		goto return_from_call;
+		if (vars->y < q->h - 1) {
+			row = q->pixels + (vars->y + 1) * q->w;
+
+			next_vars = flood_fill_call_next(q, row,
+							 from, to,
+							 func, user_data,
+							 vars, 1);
+			if (next_vars != NULL) {
+				continue;
+			}
+		}
+
+		if (vars > stack) {
+			/* Restore the previous context */
+			next_vars = vars - 1;
+			continue;
+		}
+
+		break;
 	}
 }
 
