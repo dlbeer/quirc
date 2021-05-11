@@ -124,6 +124,35 @@ static void perspective_unmap(const double *c,
 
 typedef void (*span_func_t)(void *user_data, int y, int left, int right);
 
+static void flood_fill_line(struct quirc *q, int x, int y,
+			    int from, int to,
+			    int *leftp, int *rightp)
+{
+	quirc_pixel_t *row;
+	int left;
+	int right;
+	int i;
+
+	left = x;
+	right = x;
+
+	row = q->pixels + y * q->w;
+
+	while (left > 0 && row[left - 1] == from)
+		left--;
+
+	while (right < q->w - 1 && row[right + 1] == from)
+		right++;
+
+	/* Fill the extent */
+	for (i = left; i <= right; i++)
+		row[i] = to;
+
+	/* Return the processed range */
+	*leftp = left;
+	*rightp = right;
+}
+
 static void flood_fill_seed(struct quirc *q,
 			    int x0, int y0,
 			    int from, int to,
@@ -146,20 +175,10 @@ static void flood_fill_seed(struct quirc *q,
 
 call:
 	vars = next_vars;
-	vars->left = vars->x;
-	vars->right = vars->x;
-
-	row = q->pixels + vars->y * q->w;
-
-	while (vars->left > 0 && row[vars->left - 1] == from)
-		vars->left--;
-
-	while (vars->right < q->w - 1 && row[vars->right + 1] == from)
-		vars->right++;
 
 	/* Fill the extent */
-	for (i = vars->left; i <= vars->right; i++)
-		row[i] = to;
+	flood_fill_line(q, vars->x, vars->y, from, to, &vars->left,
+			&vars->right);
 
 	if (func)
 		func(user_data, vars->y, vars->left, vars->right);
