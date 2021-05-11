@@ -158,6 +158,48 @@ static void flood_fill_line(struct quirc *q, int x, int y,
 		func(user_data, y, left, right);
 }
 
+static struct quirc_flood_fill_vars *flood_fill_call_next(
+			struct quirc *q,
+			quirc_pixel_t *row,
+			int from, int to,
+			span_func_t func, void *user_data,
+			struct quirc_flood_fill_vars *vars,
+			int direction)
+{
+	int *leftp;
+
+	if (direction < 0) {
+		leftp = &vars->left_up;
+	} else {
+		leftp = &vars->left_down;
+	}
+
+	while (*leftp <= vars->right) {
+		if (row[*leftp] == from) {
+			struct quirc_flood_fill_vars *next_vars;
+
+			/* Set up the next context */
+			next_vars = vars + 1;
+			next_vars->left_up = *leftp;
+			next_vars->y = vars->y + direction;
+
+			/* Fill the extent */
+			flood_fill_line(q,
+					next_vars->left_up,
+					next_vars->y,
+					from, to,
+					func, user_data,
+					&next_vars->left_up,
+					&next_vars->right);
+			next_vars->left_down = next_vars->left_up;
+
+			return next_vars;
+		}
+		(*leftp)++;
+	}
+	return NULL;
+}
+
 static void flood_fill_seed(struct quirc *q,
 			    int x0, int y0,
 			    int from, int to,
@@ -198,50 +240,24 @@ return_from_call:
 	if (vars->y > 0) {
 		row = q->pixels + (vars->y - 1) * q->w;
 
-		while (vars->left_up <= vars->right) {
-			if (row[vars->left_up] == from) {
-				/* Set up the next context */
-				next_vars = vars + 1;
-				next_vars->left_up = vars->left_up;
-				next_vars->y = vars->y - 1;
-
-				/* Fill the extent */
-				flood_fill_line(q,
-						next_vars->left_up,
-						next_vars->y, from, to,
-						func, user_data,
-						&next_vars->left_up,
-						&next_vars->right);
-				next_vars->left_down = next_vars->left_up;
-
-				goto call;
-			}
-			vars->left_up++;
+		next_vars = flood_fill_call_next(q, row,
+						 from, to,
+						 func, user_data,
+						 vars, -1);
+		if (next_vars != NULL) {
+			goto call;
 		}
 	}
 
 	if (vars->y < q->h - 1) {
 		row = q->pixels + (vars->y + 1) * q->w;
 
-		while (vars->left_down <= vars->right) {
-			if (row[vars->left_down] == from) {
-				/* Set up the next context */
-				next_vars = vars + 1;
-				next_vars->left_up = vars->left_down;
-				next_vars->y = vars->y + 1;
-
-				/* Fill the extent */
-				flood_fill_line(q,
-						next_vars->left_up,
-						next_vars->y, from, to,
-						func, user_data,
-						&next_vars->left_up,
-						&next_vars->right);
-				next_vars->left_down = next_vars->left_up;
-
-				goto call;
-			}
-			vars->left_down++;
+		next_vars = flood_fill_call_next(q, row,
+						 from, to,
+						 func, user_data,
+						 vars, 1);
+		if (next_vars != NULL) {
+			goto call;
 		}
 	}
 
