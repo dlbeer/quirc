@@ -126,6 +126,7 @@ typedef void (*span_func_t)(void *user_data, int y, int left, int right);
 
 static void flood_fill_line(struct quirc *q, int x, int y,
 			    int from, int to,
+			    span_func_t func, void *user_data,
 			    int *leftp, int *rightp)
 {
 	quirc_pixel_t *row;
@@ -152,6 +153,9 @@ static void flood_fill_line(struct quirc *q, int x, int y,
 	/* Return the processed range */
 	*leftp = left;
 	*rightp = right;
+
+	if (func)
+		func(user_data, y, left, right);
 }
 
 static void flood_fill_seed(struct quirc *q,
@@ -187,11 +191,9 @@ call:
 	 */
 
 	/* Fill the extent */
-	flood_fill_line(q, vars->left_up, vars->y, from, to, &vars->left_up,
-			&vars->right);
-
-	if (func)
-		func(user_data, vars->y, vars->left_up, vars->right);
+	flood_fill_line(q, vars->left_up, vars->y, from, to,
+			func, user_data,
+			&vars->left_up, &vars->right);
 
 	if (vars == last_vars) {
 		return;
