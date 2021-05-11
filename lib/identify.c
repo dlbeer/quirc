@@ -178,21 +178,22 @@ static struct quirc_flood_fill_vars *flood_fill_call_next(
 	while (*leftp <= vars->right) {
 		if (row[*leftp] == from) {
 			struct quirc_flood_fill_vars *next_vars;
+			int next_left;
 
 			/* Set up the next context */
 			next_vars = vars + 1;
-			next_vars->left_up = *leftp;
 			next_vars->y = vars->y + direction;
 
 			/* Fill the extent */
 			flood_fill_line(q,
-					next_vars->left_up,
+					*leftp,
 					next_vars->y,
 					from, to,
 					func, user_data,
-					&next_vars->left_up,
+					&next_left,
 					&next_vars->right);
-			next_vars->left_down = next_vars->left_up;
+			next_vars->left_down = next_left;
+			next_vars->left_up = next_left;
 
 			return next_vars;
 		}
@@ -215,17 +216,18 @@ static void flood_fill_seed(struct quirc *q,
 	QUIRC_ASSERT(q->pixels[y0 * q->w + x0] == from);
 
 	struct quirc_flood_fill_vars *next_vars;
+	int next_left;
 
 	/* Set up the first context  */
 	next_vars = stack;
-	next_vars->left_up = x0;
 	next_vars->y = y0;
 
 	/* Fill the extent */
-	flood_fill_line(q, next_vars->left_up, next_vars->y, from, to,
+	flood_fill_line(q, x0, next_vars->y, from, to,
 			func, user_data,
-			&next_vars->left_up, &next_vars->right);
-	next_vars->left_down = next_vars->left_up;
+			&next_left, &next_vars->right);
+	next_vars->left_down = next_left;
+	next_vars->left_up = next_left;
 
 	while (true) {
 		struct quirc_flood_fill_vars * const vars = next_vars;
