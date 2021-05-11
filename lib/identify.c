@@ -177,28 +177,28 @@ static void flood_fill_seed(struct quirc *q, int x, int y, int from, int to,
 
 static uint8_t otsu(const struct quirc *q)
 {
-	int numPixels = q->w * q->h;
+	unsigned int numPixels = q->w * q->h;
 
 	// Calculate histogram
 	unsigned int histogram[UINT8_MAX + 1];
 	(void)memset(histogram, 0, sizeof(histogram));
 	uint8_t* ptr = q->image;
-	int length = numPixels;
+	unsigned int length = numPixels;
 	while (length--) {
 		uint8_t value = *ptr++;
 		histogram[value]++;
 	}
 
 	// Calculate weighted sum of histogram values
-	unsigned int sum = 0;
+	double sum = 0;
 	unsigned int i = 0;
 	for (i = 0; i <= UINT8_MAX; ++i) {
 		sum += i * histogram[i];
 	}
 
 	// Compute threshold
-	int sumB = 0;
-	int q1 = 0;
+	double sumB = 0;
+	unsigned int q1 = 0;
 	double max = 0;
 	uint8_t threshold = 0;
 	for (i = 0; i <= UINT8_MAX; ++i) {
@@ -208,13 +208,13 @@ static uint8_t otsu(const struct quirc *q)
 			continue;
 
 		// Weighted foreground
-		const int q2 = numPixels - q1;
+		const unsigned int q2 = numPixels - q1;
 		if (q2 == 0)
 			break;
 
 		sumB += i * histogram[i];
-		const double m1 = (double)sumB / q1;
-		const double m2 = ((double)sum - sumB) / q2;
+		const double m1 = sumB / q1;
+		const double m2 = (sum - sumB) / q2;
 		const double m1m2 = m1 - m2;
 		const double variance = m1m2 * m1m2 * q1 * q2;
 		if (variance >= max) {
