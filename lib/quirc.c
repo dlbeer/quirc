@@ -41,6 +41,7 @@ void quirc_destroy(struct quirc *q)
 	   same size, so we need to be careful here to avoid a double free */
 	if (!QUIRC_PIXEL_ALIAS_IMAGE)
 		free(q->pixels);
+	free(q->flood_fill_vars);
 	free(q);
 }
 
@@ -48,6 +49,9 @@ int quirc_resize(struct quirc *q, int w, int h)
 {
 	uint8_t		*image  = NULL;
 	quirc_pixel_t	*pixels = NULL;
+	size_t num_vars;
+	size_t vars_byte_size;
+	struct quirc_flood_fill_vars *vars = NULL;
 
 	/*
 	 * XXX: w and h should be size_t (or at least unsigned) as negatives
@@ -86,6 +90,33 @@ int quirc_resize(struct quirc *q, int w, int h)
 			goto fail;
 	}
 
+	/*
+	 * alloc the work area for the flood filling logic.
+	 *
+	 * the size was chosen with the following assumptions and observations:
+	 *
+	 * - rings are the regions which requires the biggest work area.
+	 * - they consumes the most when they are rotated by about 45 degree.
+	 *   in that case, the necessary depth is about (2 * height_of_the_ring).
+	 * - the maximum height of rings would be about 1/3 of the image height.
+	 */
+
+	if ((size_t)h * 2 / 2 != h) {
+		goto fail; /* size_t overflow */
+	}
+	num_vars = (size_t)h * 2 / 3;
+	if (num_vars == 0) {
+		num_vars = 1;
+	}
+
+	vars_byte_size = sizeof(*vars) * num_vars;
+	if (vars_byte_size / sizeof(*vars) != num_vars) {
+		goto fail; /* size_t overflow */
+	}
+	vars = malloc(vars_byte_size);
+	if (!vars)
+		goto fail;
+
 	/* alloc succeeded, update `q` with the new size and buffers */
 	q->w = w;
 	q->h = h;
@@ -95,12 +126,16 @@ int quirc_resize(struct quirc *q, int w, int h)
 		free(q->pixels);
 		q->pixels = pixels;
 	}
+	free(q->flood_fill_vars);
+	q->flood_fill_vars = vars;
+	q->num_flood_fill_vars = num_vars;
 
 	return 0;
 	/* NOTREACHED */
 fail:
 	free(image);
 	free(pixels);
+	free(vars);
 
 	return -1;
 }

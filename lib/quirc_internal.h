@@ -17,7 +17,12 @@
 #ifndef QUIRC_INTERNAL_H_
 #define QUIRC_INTERNAL_H_
 
+#include <assert.h>
+#include <stdlib.h>
+
 #include "quirc.h"
+
+#define QUIRC_ASSERT(a)	assert(a)
 
 #define QUIRC_PIXEL_WHITE	0
 #define QUIRC_PIXEL_BLACK	1
@@ -74,6 +79,13 @@ struct quirc_grid {
 	double			c[QUIRC_PERSPECTIVE_PARAMS];
 };
 
+struct quirc_flood_fill_vars {
+	int y;
+	int right;
+	int left_up;
+	int left_down;
+};
+
 struct quirc {
 	uint8_t			*image;
 	quirc_pixel_t		*pixels;
@@ -88,6 +100,9 @@ struct quirc {
 
 	int			num_grids;
 	struct quirc_grid	grids[QUIRC_MAX_GRIDS];
+
+	size_t      		num_flood_fill_vars;
+	struct quirc_flood_fill_vars *flood_fill_vars;
 };
 
 /************************************************************************

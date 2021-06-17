@@ -28,8 +28,7 @@ a good choice for this purpose:
 
 The distribution comes with, in addition to the library, several test programs.
 While the core library is very portable, these programs have some additional
-dependencies. All of them require libjpeg, and two (`quirc-demo` and `inspect`)
-require SDL. The camera demos use Linux-specific APIs:
+dependencies as documented below.
 
 ### quirc-demo
 
@@ -38,11 +37,22 @@ video stream is displayed on screen as it's received, and any QR codes
 recognised are highlighted in the image, with the decoded information both
 displayed on the image and printed on stdout.
 
+This requires: libjpeg, libpng, SDL, V4L2
+
+### quirc-demo-opencv
+
+A demo similar to `quirc-demo`.
+But this version uses OpenCV instead of other libraries.
+
+This requires: OpenCV
+
 ### quirc-scanner
 
 This program turns your camera into a barcode scanner. It's almost the same as
 the `demo` application, but it doesn't display the video stream, and thus
 doesn't require a graphical display.
+
+This requires: libjpeg, V4L2
 
 ### qrtest
 
@@ -51,11 +61,37 @@ tree containing a bunch of JPEG images, it will attempt to locate and decode QR
 codes in each image. Speed and success statistics are collected and printed on
 stdout.
 
+This requires: libjpeg, libpng
+
 ### inspect
 
 This test is used for debugging. Given a single JPEG image, it will display a
 diagram showing the internal state of the decoder as well as printing
 additional information on stdout.
+
+This requires: libjpeg, libpng, SDL
+
+Build-time requirements
+-----------------------
+
+### make
+
+While we are trying to keep our makefiles portable,
+it might be incompatible with some versions of make.
+
+#### GNU make
+
+Version 4.x and later works. We recommend to use it.
+
+Version prior to 4.0 doesn't work because it doesn't support `!=`.
+
+*Note*: macOS's default version of make is GNU make 3.81 as of writing this.
+
+#### BSD make
+
+It also works.
+You might need to specify the `-r` make option because some of
+the default macros like CFLAGS from sys.mk can cause unintended effects.
 
 Installation
 ------------
@@ -75,6 +111,7 @@ are unable to build everything:
 * inspect
 * quirc-scanner
 * quirc-demo
+* quirc-demo-opencv
 
 Library use
 -----------
@@ -173,6 +210,23 @@ for (i = 0; i < num_codes; i++) {
 
 `quirc_code` and `quirc_data` are flat structures which don't need to be
 initialized or freed after use.
+
+In case you also need to support horizontally flipped QR-codes (mirrored
+images according to ISO 18004:2015, pages 6 and 62), you can make a second
+decode attempt with the flipped image data whenever you get an ECC failure:
+
+```C
+    err = quirc_decode(&code, &data);
+    if (err == QUIRC_ERROR_DATA_ECC) {
+        quirc_flip(&code);
+        err = quirc_decode(&code, &data);
+    }
+
+    if (err)
+        printf("DECODE FAILED: %s\n", quirc_strerror(err));
+    else
+        printf("Data: %s\n", data.payload);
+```
 
 Copyright
 ---------
