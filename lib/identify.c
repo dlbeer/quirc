@@ -537,128 +537,31 @@ static void find_leftmost_to_line(void *user_data, int y, int left, int right)
 	}
 }
 
-/* Do a Bresenham scan from one point to another and count the number
- * of black/white transitions.
- */
-static int timing_scan(const struct quirc *q,
-		       const struct quirc_point *p0,
-		       const struct quirc_point *p1)
+static double distance(struct quirc_point a, struct quirc_point b)
 {
-	int n = p1->x - p0->x;
-	int d = p1->y - p0->y;
-	int x = p0->x;
-	int y = p0->y;
-	int *dom, *nondom;
-	int dom_step;
-	int nondom_step;
-	int a = 0;
-	int i;
-	int run_length = 0;
-	int count = 0;
-
-	if (p0->x < 0 || p0->y < 0 || p0->x >= q->w || p0->y >= q->h)
-		return -1;
-	if (p1->x < 0 || p1->y < 0 || p1->x >= q->w || p1->y >= q->h)
-		return -1;
-
-	if (abs(n) > abs(d)) {
-		int swap = n;
-
-		n = d;
-		d = swap;
-
-		dom = &x;
-		nondom = &y;
-	} else {
-		dom = &y;
-		nondom = &x;
-	}
-
-	if (n < 0) {
-		n = -n;
-		nondom_step = -1;
-	} else {
-		nondom_step = 1;
-	}
-
-	if (d < 0) {
-		d = -d;
-		dom_step = -1;
-	} else {
-		dom_step = 1;
-	}
-
-	x = p0->x;
-	y = p0->y;
-	for (i = 0; i <= d; i++) {
-		int pixel;
-
-		if (y < 0 || y >= q->h || x < 0 || x >= q->w)
-			break;
-
-		pixel = q->pixels[y * q->w + x];
-
-		if (pixel) {
-			if (run_length >= 2)
-				count++;
-			run_length = 0;
-		} else {
-			run_length++;
-		}
-
-		a += n;
-		*dom += dom_step;
-		if (a >= d) {
-			*nondom += nondom_step;
-			a -= d;
-		}
-	}
-
-	return count;
+	return sqrt((a.x - b.x)*(a.x - b.x) +  (a.y - b.y)*(a.y - b.y));
 }
-
-/* Try the measure the timing pattern for a given QR code. This does
- * not require the global perspective to have been set up, but it
- * does require that the capstone corners have been set to their
- * canonical rotation.
- *
- * For each capstone, we find a point in the middle of the ring band
- * which is nearest the centre of the code. Using these points, we do
- * a horizontal and a vertical timing scan.
+/* Estimate grid size by determing distance between capstones
  */
-static int measure_timing_pattern(struct quirc *q, int index)
+static void measure_grid_size(struct quirc *q, int index)
 {
 	struct quirc_grid *qr = &q->grids[index];
-	int i;
-	int scan;
-	int ver;
-	int size;
 
-	for (i = 0; i < 3; i++) {
-		static const double us[] = {6.5, 6.5, 0.5};
-		static const double vs[] = {0.5, 6.5, 6.5};
-		struct quirc_capstone *cap = &q->capstones[qr->caps[i]];
+	struct quirc_capstone *a = &(q->capstones[qr->caps[0]]);
+	struct quirc_capstone *b = &(q->capstones[qr->caps[1]]);
+	struct quirc_capstone *c = &(q->capstones[qr->caps[2]]);
 
-		perspective_map(cap->c, us[i], vs[i], &qr->tpep[i]);
-	}
+	double ab = distance(b->corners[0], a->corners[3]);
+	double capstone_ab_size = (distance(b->corners[0], b->corners[3]) + distance(a->corners[0], a->corners[3]))/2.0;
+	double ver_grid = 7.0 * ab / capstone_ab_size;
 
-	qr->hscan = timing_scan(q, &qr->tpep[1], &qr->tpep[2]);
-	qr->vscan = timing_scan(q, &qr->tpep[1], &qr->tpep[0]);
-
-	scan = qr->hscan;
-	if (qr->vscan > scan)
-		scan = qr->vscan;
-
-	/* If neither scan worked, we can't go any further. */
-	if (scan < 0)
-		return -1;
-
-	/* Choose the nearest allowable grid size */
-	size = scan * 2 + 13;
-	ver = (size - 15) / 4;
-	qr->grid_size = ver * 4 + 17;
-
-	return 0;
+	double bc = distance(b->corners[0], c->corners[1]);
+	double capstone_bc_size = (distance(b->corners[0], b->corners[1]) + distance(c->corners[0], c->corners[1]))/2.0;
+	double hor_grid = 7.0 * bc / capstone_bc_size;
+	
+	double grid_size_estimate = (ver_grid + hor_grid) / 2;
+	
+	qr->grid_size =  4*((int)(grid_size_estimate - 17.0 + 2.0) / 4) + 17;
 }
 
 /* Read a cell from a grid using the currently set perspective
@@ -922,12 +825,10 @@ static void record_qr_grid(struct quirc *q, int a, int b, int c)
 		cap->qr_grid = qr_index;
 	}
 
-	/* Check the timing pattern. This doesn't require a perspective
+	/* Check the timing pattern by measuring grid size. This doesn't require a perspective
 	 * transform.
 	 */
-	if (measure_timing_pattern(q, qr_index) < 0)
-		goto fail;
-
+	measure_grid_size(q, qr_index);
 	/* Make an estimate based for the alignment pattern based on extending
 	 * lines from capstones A and C.
 	 */
@@ -994,32 +895,16 @@ static void test_neighbours(struct quirc *q, int i,
 			    const struct neighbour_list *hlist,
 			    const struct neighbour_list *vlist)
 {
-	int j, k;
-	double best_score = 0.0;
-	int best_h = -1, best_v = -1;
-
 	/* Test each possible grouping */
-	for (j = 0; j < hlist->count; j++)
-		for (k = 0; k < vlist->count; k++) {
-			const struct neighbour *hn = &hlist->n[j];
+	for (int j = 0; j < hlist->count; j++) {
+		const struct neighbour *hn = &hlist->n[j];
+		for (int k = 0; k < vlist->count; k++) {
 			const struct neighbour *vn = &vlist->n[k];
 			double squareness = fabs(1.0 - hn->distance / vn->distance);
-
-			if (squareness > 0.2)
-				continue;
-			double score = hn->distance;
-
-			if (best_h < 0 || score < best_score) {
-				best_h = hn->index;
-				best_v = vn->index;
-				best_score = score;
-			}
+			if (squareness < 0.2)
+				record_qr_grid(q, hn->index, i, vn->index);
 		}
-
-	if (best_h < 0 || best_v < 0)
-		return;
-
-	record_qr_grid(q, best_h, i, best_v);
+	}
 }
 
 static void test_grouping(struct quirc *q, int i)
@@ -1028,9 +913,6 @@ static void test_grouping(struct quirc *q, int i)
 	int j;
 	struct neighbour_list hlist;
 	struct neighbour_list vlist;
-
-	if (c1->qr_grid >= 0)
-		return;
 
 	hlist.count = 0;
 	vlist.count = 0;
@@ -1042,7 +924,7 @@ static void test_grouping(struct quirc *q, int i)
 		struct quirc_capstone *c2 = &q->capstones[j];
 		double u, v;
 
-		if (i == j || c2->qr_grid >= 0)
+		if (i == j)
 			continue;
 
 		perspective_unmap(c1->c, &c2->center, &u, &v);
