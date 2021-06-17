@@ -399,7 +399,7 @@ static quirc_decode_error_t correct_format(uint16_t *f_ret)
  */
 
 struct datastream {
-	uint8_t		raw[QUIRC_MAX_PAYLOAD];
+	uint8_t		*raw;
 	int		data_bits;
 	int		ptr;
 
@@ -409,7 +409,6 @@ struct datastream {
 static inline int grid_bit(const struct quirc_code *code, int x, int y)
 {
 	int p = y * code->size + x;
-
 	return (code->cell_bitmap[p >> 3] >> (p & 7)) & 1;
 }
 
@@ -906,14 +905,41 @@ quirc_decode_error_t quirc_decode(const struct quirc_code *code,
 	if (err)
 		return err;
 
+	/*
+	 * Borrow data->payload to store the raw bits.
+	 * It's only used during read_data + coddestream_ecc below.
+	 *
+	 * This trick saves the size of struct datastream, which we allocate
+	 * on the stack.
+	 */
+
+	ds.raw = data->payload;
+
 	read_data(code, data, &ds);
 	err = codestream_ecc(data, &ds);
 	if (err)
 		return err;
+
+	ds.raw = NULL; /* We've done with this buffer. */
 
 	err = decode_payload(data, &ds);
 	if (err)
 		return err;
 
 	return QUIRC_SUCCESS;
+}
+
+void quirc_flip(struct quirc_code *code)
+{
+	struct quirc_code flipped = {0};
+	unsigned int offset = 0;
+	for (int y = 0; y < code->size; y++) {
+		for (int x = 0; x < code->size; x++) {
+			if (grid_bit(code, y, x)) {
+				flipped.cell_bitmap[offset >> 3u] |= (1u << (offset & 7u));
+			}
+			offset++;
+		}
+	}
+	memcpy(&code->cell_bitmap, &flipped.cell_bitmap, sizeof(flipped.cell_bitmap));
 }

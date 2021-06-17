@@ -34,6 +34,10 @@ static void dump_info(struct quirc *q)
 
 		quirc_extract(q, i, &code);
 		err = quirc_decode(&code, &data);
+		if (err == QUIRC_ERROR_DATA_ECC) {
+			quirc_flip(&code);
+			err = quirc_decode(&code, &data);
+		}
 
 		dump_cells(&code);
 		printf("\n");

@@ -40,6 +40,10 @@ struct dthash {
 	int			timeout;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Initialise a detector hash with the given timeout. */
 void dthash_init(struct dthash *d, int timeout);
 
@@ -49,5 +53,9 @@ void dthash_init(struct dthash *d, int timeout);
  * configured timeout period.
  */
 int dthash_seen(struct dthash *d, const struct quirc_data *data);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
