@@ -33,6 +33,16 @@ const char *quirc_version(void);
  */
 struct quirc *quirc_new(void);
 
+/* Alternate constructor function that accepts buffer pointers so that
+ * no malloc() or free() calls are necessary.  Useful on embedded systems
+ * to help avoid allocating more buffer space than might be available, or
+ * to use a memory buffer that is statically allocated or allocated with
+ * something other than malloc().
+ *
+ * Note that QUIRC_PIXEL_ALIAS_IMAGE must be true (1) to use this constructor.
+ */
+int quirc_init(struct quirc *q, int w, int h, uint8_t *image);
+
 /* Destroy a QR-code recognizer. */
 void quirc_destroy(struct quirc *q);
 
