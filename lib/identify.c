@@ -650,8 +650,8 @@ static void find_leftmost_to_line(void *user_data, int y, int left, int right)
 
 static double length(struct quirc_point a, struct quirc_point b)
 {
-	double x = fabs(a.x - b.x) + 1;
-	double y = fabs(a.y - b.y) + 1;
+	double x = abs(a.x - b.x) + 1;
+	double y = abs(a.y - b.y) + 1;
 	return sqrt(x * x +  y * y);
 }
 /* Estimate grid size by determing distance between capstones
