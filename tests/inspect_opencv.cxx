@@ -27,21 +27,43 @@ using namespace cv;
 #include "dbgutil.h"
 
 /*
- * Macros to conver a color from the SDL_gfxprimitive style format.
- * bpp=4, little-endian.
+ * Macros to convert a color from the SDL/SDL_gfxprimitive style format.
+ *
+ * Note: we don't use alpha values and thus ignore them.
  */
 
-#define	R(c)	((c) & 0xff)
-#define	G(c)	((c >> 8) & 0xff)
-#define	B(c)	((c >> 16) & 0xff)
+/*
+ * The format used for a frame with bpp=4, little-endian.
+ */
+
+#define RAW_R(c)    ((c) & 0xff)
+#define RAW_G(c)    ((c >> 8) & 0xff)
+#define RAW_B(c)    ((c >> 16) & 0xff)
+
+/*
+ * SDL_gfx color is 0xRRGGBBAA
+ * https://www.ferzkopp.net/Software/SDL_gfx-2.0/Docs/html/index.html
+ */
+
+#define	R(c)	((c >> 24) & 0xff)
+#define	G(c)	((c >> 16) & 0xff)
+#define	B(c)	((c >> 8) & 0xff)
+#define	A(c)	(c & 0xff)
+
+/*
+ * OpenCV color is BGR.
+ */
+
 #define	COLOR(c)	Scalar(B(c), G(c), R(c))
+
+static double scale = 1.0;
 
 static void stringColor(Mat &screen, int x, int y, const char *text,
 			uint32_t color)
 {
 	static const int font = FONT_HERSHEY_PLAIN;
-	static const int thickness = 4;
-	static const double font_scale = 4.0;
+	static const int thickness = scale;
+	static const double font_scale = scale;
 
 	putText(screen, text, Point(x, y), font, font_scale, COLOR(color),
 		thickness);
@@ -59,10 +81,22 @@ static void pixelColor(Mat &screen, int x, int y, uint32_t color)
 	screen_pixel[2] = R(color);
 }
 
+static void pixelColorRaw(Mat &screen, int x, int y, uint32_t rawColor)
+{
+	if (x < 0 || y < 0 || x >= screen.cols || y >= screen.rows) {
+		return;
+	}
+
+	Vec3b &screen_pixel = screen.at<Vec3b>(y, x);
+	screen_pixel[0] = RAW_B(rawColor);
+	screen_pixel[1] = RAW_G(rawColor);
+	screen_pixel[2] = RAW_R(rawColor);
+}
+
 static void lineColor(Mat &screen, int x1, int y1, int x2, int y2,
 		      uint32_t color)
 {
-	line(screen, Point(x1, y1), Point(x2, y2), COLOR(color), 8);
+	line(screen, Point(x1, y1), Point(x2, y2), COLOR(color), scale);
 }
 
 static void dump_info(struct quirc *q)
@@ -125,7 +159,7 @@ static void draw_frame(Mat &screen, struct quirc *q)
 				break;
 			}
 
-			pixelColor(screen, x, y, color);
+			pixelColorRaw(screen, x, y, color);
 		}
 	}
 }
