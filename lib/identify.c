@@ -648,9 +648,11 @@ static void find_leftmost_to_line(void *user_data, int y, int left, int right)
 	}
 }
 
-static double distance(struct quirc_point a, struct quirc_point b)
+static double length(struct quirc_point a, struct quirc_point b)
 {
-	return sqrt((a.x - b.x)*(a.x - b.x) +  (a.y - b.y)*(a.y - b.y));
+	double x = abs(a.x - b.x) + 1;
+	double y = abs(a.y - b.y) + 1;
+	return sqrt(x * x +  y * y);
 }
 /* Estimate grid size by determing distance between capstones
  */
@@ -662,17 +664,19 @@ static void measure_grid_size(struct quirc *q, int index)
 	struct quirc_capstone *b = &(q->capstones[qr->caps[1]]);
 	struct quirc_capstone *c = &(q->capstones[qr->caps[2]]);
 
-	double ab = distance(b->corners[0], a->corners[3]);
-	double capstone_ab_size = (distance(b->corners[0], b->corners[3]) + distance(a->corners[0], a->corners[3]))/2.0;
+	double ab = length(b->corners[0], a->corners[3]);
+	double capstone_ab_size = (length(b->corners[0], b->corners[3]) + length(a->corners[0], a->corners[3]))/2.0;
 	double ver_grid = 7.0 * ab / capstone_ab_size;
 
-	double bc = distance(b->corners[0], c->corners[1]);
-	double capstone_bc_size = (distance(b->corners[0], b->corners[1]) + distance(c->corners[0], c->corners[1]))/2.0;
+	double bc = length(b->corners[0], c->corners[1]);
+	double capstone_bc_size = (length(b->corners[0], b->corners[1]) + length(c->corners[0], c->corners[1]))/2.0;
 	double hor_grid = 7.0 * bc / capstone_bc_size;
 	
 	double grid_size_estimate = (ver_grid + hor_grid) / 2;
+
+	int ver = (int)((grid_size_estimate - 17.0 + 2.0) / 4.0);
 	
-	qr->grid_size =  4*((int)(grid_size_estimate - 17.0 + 2.0) / 4) + 17;
+	qr->grid_size =  4*ver + 17;
 }
 
 /* Read a cell from a grid using the currently set perspective
