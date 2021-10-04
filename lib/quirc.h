@@ -42,7 +42,7 @@ void quirc_destroy(struct quirc *q);
  * This function returns 0 on success, or -1 if sufficient memory could
  * not be allocated.
  */
-int quirc_resize(struct quirc *q, int w, int h);
+int quirc_resize(struct quirc *q, uint8_t* outter_image, int w, int h);
 
 /* These functions are used to process images for QR-code recognition.
  * quirc_begin() must first be called to obtain access to a buffer into
