@@ -36,7 +36,7 @@ struct quirc *quirc_new(void)
 
 void quirc_destroy(struct quirc *q)
 {
-	if (!q->outter_alloc)
+	if (!q->outer_alloc)
 		free(q->image);
 	/* q->pixels may alias q->image when their type representation is of the
 	   same size, so we need to be careful here to avoid a double free */
@@ -46,7 +46,7 @@ void quirc_destroy(struct quirc *q)
 	free(q);
 }
 
-int quirc_resize(struct quirc *q, uint8_t * outter_image, int w, int h)
+int quirc_resize(struct quirc *q, uint8_t * outer_image, int w, int h)
 {
 	uint8_t		*image  = NULL;
 	quirc_pixel_t	*pixels = NULL;
@@ -67,8 +67,8 @@ int quirc_resize(struct quirc *q, uint8_t * outter_image, int w, int h)
 	 * alloc a new buffer for q->image. We avoid realloc(3) because we want
 	 * on failure to be leave `q` in a consistant, unmodified state.
 	 */
-	if (outter_image) {
-		image = outter_image;
+	if (outer_image) {
+		image = outer_image;
 	}
 	else {
 		image = calloc(w , h);
@@ -127,11 +127,11 @@ int quirc_resize(struct quirc *q, uint8_t * outter_image, int w, int h)
 	/* alloc succeeded, update `q` with the new size and buffers */
 	q->w = w;
 	q->h = h;
-	if(q->outter_alloc)
+	if(q->outer_alloc)
 		free(q->image);
 	q->image = image;
-	if(outter_image)
-		q->outter_alloc = 1;
+	if(outer_image)
+		q->outer_alloc = 1;
 	if (!QUIRC_PIXEL_ALIAS_IMAGE) {
 		free(q->pixels);
 		q->pixels = pixels;
@@ -143,7 +143,7 @@ int quirc_resize(struct quirc *q, uint8_t * outter_image, int w, int h)
 	return 0;
 	/* NOTREACHED */
 fail:
-	if (!outter_image)
+	if (!outer_image)
 		free(image);
 	free(pixels);
 	free(vars);
