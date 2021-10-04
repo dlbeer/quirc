@@ -104,7 +104,7 @@ struct quirc {
 	size_t      		num_flood_fill_vars;
 	struct quirc_flood_fill_vars *flood_fill_vars;
 	
-	uint8_t outter_alloc;
+	uint8_t outer_alloc;
 };
 
 /************************************************************************
