@@ -1118,10 +1118,10 @@ void quirc_extract(const struct quirc *q, int index,
 	int y;
 	int i = 0;
 
+	memset(code, 0, sizeof(*code));
+
 	if (index < 0 || index > q->num_grids)
 		return;
-
-	memset(code, 0, sizeof(*code));
 
 	perspective_map(qr->c, 0.0, 0.0, &code->corners[0]);
 	perspective_map(qr->c, qr->grid_size, 0.0, &code->corners[1]);
@@ -1130,6 +1130,12 @@ void quirc_extract(const struct quirc *q, int index,
 	perspective_map(qr->c, 0.0, qr->grid_size, &code->corners[3]);
 
 	code->size = qr->grid_size;
+
+	/* Skip out early so as not to overrun the buffer. quirc_decode
+	 * will return an error on interpreting the code.
+	 */
+	if (code->size > QUIRC_MAX_GRID_SIZE)
+		return;
 
 	for (y = 0; y < qr->grid_size; y++) {
 		int x;
