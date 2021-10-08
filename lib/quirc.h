@@ -36,13 +36,22 @@ struct quirc *quirc_new(void);
 /* Destroy a QR-code recognizer. */
 void quirc_destroy(struct quirc *q);
 
+/* Set the QR-code recognizer. use internal allocation memory or external 
+ * allocation memory buffer.
+ * specified before call quirc_resize. use internal allocation memory buffer.
+ *
+ * This function returns 0 on success, or -1 if sufficient memory could
+ * not be allocated.
+ */
+int quirc_set_image_buffer(struct quirc* q, uint8_t* image_buffer);
+
 /* Resize the QR-code recognizer. The size of an image must be
  * specified before codes can be analyzed.
  *
  * This function returns 0 on success, or -1 if sufficient memory could
  * not be allocated.
  */
-int quirc_resize(struct quirc *q, int w, int h);
+int quirc_resize(struct quirc* q, int w, int h);
 
 /* These functions are used to process images for QR-code recognition.
  * quirc_begin() must first be called to obtain access to a buffer into
