@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "quirc_internal.h"
+#include <sys/mman.h>
 
 const char *quirc_version(void)
 {
@@ -36,7 +37,7 @@ struct quirc *quirc_new(void)
 
 void quirc_destroy(struct quirc *q)
 {
-	free(q->image);
+	munmap(q->image, q->w * q->h);
 	/* q->pixels may alias q->image when their type representation is of the
 	   same size, so we need to be careful here to avoid a double free */
 	if (!QUIRC_PIXEL_ALIAS_IMAGE)
@@ -62,19 +63,21 @@ int quirc_resize(struct quirc *q, int w, int h)
 	if (w < 0 || h < 0)
 		goto fail;
 
-	/*
-	 * alloc a new buffer for q->image. We avoid realloc(3) because we want
-	 * on failure to be leave `q` in a consistant, unmodified state.
-	 */
-	image = calloc(w, h);
-	if (!image)
-		goto fail;
-
 	/* compute the "old" (i.e. currently allocated) and the "new"
 	   (i.e. requested) image dimensions */
 	size_t olddim = q->w * q->h;
 	size_t newdim = w * h;
 	size_t min = (olddim < newdim ? olddim : newdim);
+
+	/*
+	 * alloc a new buffer for q->image. We avoid realloc(3) because we want
+	 * on failure to be leave `q` in a consistant, unmodified state.
+	 * mmap will ensure memory page alignment
+	 */
+	image = mmap(NULL, newdim, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+	if (!image)
+		goto fail;
+	memset(image, 0, newdim);
 
 	/*
 	 * copy the data into the new buffer, avoiding (a) to read beyond the
@@ -120,7 +123,7 @@ int quirc_resize(struct quirc *q, int w, int h)
 	/* alloc succeeded, update `q` with the new size and buffers */
 	q->w = w;
 	q->h = h;
-	free(q->image);
+	munmap(q->image, olddim);
 	q->image = image;
 	if (!QUIRC_PIXEL_ALIAS_IMAGE) {
 		free(q->pixels);
@@ -133,7 +136,8 @@ int quirc_resize(struct quirc *q, int w, int h)
 	return 0;
 	/* NOTREACHED */
 fail:
-	free(image);
+	if (image != NULL)
+		munmap(image, newdim);
 	free(pixels);
 	free(vars);
 
