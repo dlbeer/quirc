@@ -75,7 +75,7 @@ int quirc_resize(struct quirc *q, int w, int h)
 	 * mmap will ensure memory page alignment
 	 */
 	image = mmap(NULL, newdim, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-	if (!image)
+	if (image == MAP_FAILED)
 		goto fail;
 	memset(image, 0, newdim);
 
@@ -136,7 +136,7 @@ int quirc_resize(struct quirc *q, int w, int h)
 	return 0;
 	/* NOTREACHED */
 fail:
-	if (image != NULL)
+	if (image != NULL && image != MAP_FAILED)
 		munmap(image, newdim);
 	free(pixels);
 	free(vars);
