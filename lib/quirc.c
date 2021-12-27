@@ -17,7 +17,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include "quirc_internal.h"
+#ifndef _WIN32
 #include <sys/mman.h>
+#endif
 
 const char *quirc_version(void)
 {
@@ -37,7 +39,11 @@ struct quirc *quirc_new(void)
 
 void quirc_destroy(struct quirc *q)
 {
+#ifdef _WIN32
+	free(q->image);
+#else
 	munmap(q->image, q->w * q->h);
+#endif
 	/* q->pixels may alias q->image when their type representation is of the
 	   same size, so we need to be careful here to avoid a double free */
 	if (!QUIRC_PIXEL_ALIAS_IMAGE)
@@ -74,10 +80,14 @@ int quirc_resize(struct quirc *q, int w, int h)
 	 * on failure to be leave `q` in a consistant, unmodified state.
 	 * mmap will ensure memory page alignment
 	 */
+#ifdef _WIN32
+	image = calloc(w, h);
+#else
 	image = mmap(NULL, newdim, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 	if (image == MAP_FAILED)
 		goto fail;
 	memset(image, 0, newdim);
+#endif
 
 	/*
 	 * copy the data into the new buffer, avoiding (a) to read beyond the
@@ -123,7 +133,11 @@ int quirc_resize(struct quirc *q, int w, int h)
 	/* alloc succeeded, update `q` with the new size and buffers */
 	q->w = w;
 	q->h = h;
+#ifdef _WIN32
+	free(image);
+#else
 	munmap(q->image, olddim);
+#endif
 	q->image = image;
 	if (!QUIRC_PIXEL_ALIAS_IMAGE) {
 		free(q->pixels);
@@ -136,8 +150,12 @@ int quirc_resize(struct quirc *q, int w, int h)
 	return 0;
 	/* NOTREACHED */
 fail:
+#ifdef _WIN32
+	free(image);
+#else
 	if (image != NULL && image != MAP_FAILED)
 		munmap(image, newdim);
+#endif
 	free(pixels);
 	free(vars);
 
