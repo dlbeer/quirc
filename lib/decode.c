@@ -179,15 +179,19 @@ static void berlekamp_massey(const uint8_t *s, int N,
 			     const struct galois_field *gf,
 			     uint8_t *sigma)
 {
-	uint8_t C[MAX_POLY];
-	uint8_t B[MAX_POLY];
+	#ifdef QUIRC_USE_HEAP
+	uint8_t *C = (uint8_t*)calloc(MAX_POLY, sizeof(uint8_t));
+	uint8_t *B = (uint8_t*)calloc(MAX_POLY, sizeof(uint8_t));
+	#else
+	uint8_t C[MAX_POLY] = {0};
+	uint8_t B[MAX_POLY] = {0};
+	#endif
+
 	int L = 0;
 	int m = 1;
 	uint8_t b = 1;
 	int n;
 
-	memset(B, 0, sizeof(B));
-	memset(C, 0, sizeof(C));
 	B[0] = 1;
 	C[0] = 1;
 
@@ -210,21 +214,35 @@ static void berlekamp_massey(const uint8_t *s, int N,
 		if (!d) {
 			m++;
 		} else if (L * 2 <= n) {
-			uint8_t T[MAX_POLY];
+			#ifdef QUIRC_USE_HEAP
+			uint8_t *T = (uint8_t*)calloc(MAX_POLY, sizeof(uint8_t));
+			#else
+			uint8_t T[MAX_POLY] = {0};
+			#endif
 
-			memcpy(T, C, sizeof(T));
+			memcpy(T, C, sizeof(uint8_t) * MAX_POLY);
 			poly_add(C, B, mult, m, gf);
-			memcpy(B, T, sizeof(B));
+			memcpy(B, T, sizeof(uint8_t) * MAX_POLY);
+
 			L = n + 1 - L;
 			b = d;
 			m = 1;
+
+			#ifdef QUIRC_USE_HEAP
+			free(T);
+			#endif
 		} else {
 			poly_add(C, B, mult, m, gf);
 			m++;
 		}
 	}
 
-	memcpy(sigma, C, MAX_POLY);
+	memcpy(sigma, C, sizeof(uint8_t) * MAX_POLY);
+
+	#ifdef QUIRC_USE_HEAP
+	free(B);
+	free(C);
+	#endif
 }
 
 /************************************************************************
@@ -238,7 +256,7 @@ static int block_syndromes(const uint8_t *data, int bs, int npar, uint8_t *s)
 	int nonzero = 0;
 	int i;
 
-	memset(s, 0, MAX_POLY);
+	memset(s, 0, sizeof(uint8_t) * MAX_POLY);
 
 	for (i = 0; i < npar; i++) {
 		int j;
@@ -266,7 +284,7 @@ static void eloc_poly(uint8_t *omega,
 {
 	int i;
 
-	memset(omega, 0, MAX_POLY);
+	memset(omega, 0, sizeof(uint8_t) * MAX_POLY);
 
 	for (i = 0; i < npar; i++) {
 		const uint8_t a = sigma[i];
@@ -295,20 +313,36 @@ static quirc_decode_error_t correct_block(uint8_t *data,
 					  const struct quirc_rs_params *ecc)
 {
 	int npar = ecc->bs - ecc->dw;
-	uint8_t s[MAX_POLY];
-	uint8_t sigma[MAX_POLY];
-	uint8_t sigma_deriv[MAX_POLY];
-	uint8_t omega[MAX_POLY];
 	int i;
 
+	#ifdef QUIRC_USE_HEAP
+	uint8_t *s = (uint8_t*)calloc(MAX_POLY, sizeof(uint8_t));
+	#else
+	uint8_t s[MAX_POLY] = {0};
+	#endif
+
 	/* Compute syndrome vector */
-	if (!block_syndromes(data, ecc->bs, npar, s))
+	if (!block_syndromes(data, ecc->bs, npar, s)) {
+		#ifdef QUIRC_USE_HEAP
+		free(s);
+		#endif
+
 		return QUIRC_SUCCESS;
+	}
+
+	#ifdef QUIRC_USE_HEAP
+	uint8_t *sigma = (uint8_t*)calloc(MAX_POLY, sizeof(uint8_t));
+	uint8_t *sigma_deriv = (uint8_t*)calloc(MAX_POLY, sizeof(uint8_t));
+	uint8_t *omega = (uint8_t*)calloc(MAX_POLY, sizeof(uint8_t));
+	#else
+	uint8_t sigma[MAX_POLY] = {0};
+	uint8_t sigma_deriv[MAX_POLY] = {0};
+	uint8_t omega[MAX_POLY] = {0};
+	#endif
 
 	berlekamp_massey(s, npar, &gf256, sigma);
 
 	/* Compute derivative of sigma */
-	memset(sigma_deriv, 0, MAX_POLY);
 	for (i = 0; i + 1 < MAX_POLY; i += 2)
 		sigma_deriv[i] = sigma[i + 1];
 
@@ -329,8 +363,23 @@ static quirc_decode_error_t correct_block(uint8_t *data,
 		}
 	}
 
-	if (block_syndromes(data, ecc->bs, npar, s))
+	#ifdef QUIRC_USE_HEAP
+	free(sigma);
+	free(sigma_deriv);
+	free(omega);
+	#endif
+
+	if (block_syndromes(data, ecc->bs, npar, s)){
+		#ifdef QUIRC_USE_HEAP
+		free(s);
+		#endif
+
 		return QUIRC_ERROR_DATA_ECC;
+	}
+
+	#ifdef QUIRC_USE_HEAP
+	free(s);
+	#endif
 
 	return QUIRC_SUCCESS;
 }
@@ -350,7 +399,7 @@ static int format_syndromes(uint16_t u, uint8_t *s)
 	int i;
 	int nonzero = 0;
 
-	memset(s, 0, MAX_POLY);
+	memset(s, 0, sizeof(uint8_t) * MAX_POLY);
 
 	for (i = 0; i < FORMAT_SYNDROMES; i++) {
 		int j;
@@ -371,14 +420,28 @@ static quirc_decode_error_t correct_format(uint16_t *f_ret)
 {
 	uint16_t u = *f_ret;
 	int i;
-	uint8_t s[MAX_POLY];
-	uint8_t sigma[MAX_POLY];
+	#ifdef QUIRC_USE_HEAP
+	uint8_t *s = (uint8_t*)calloc(MAX_POLY, sizeof(uint8_t));
+	#else
+	uint8_t s[MAX_POLY] = {0};
+	#endif
 
 	/* Evaluate U (received codeword) at each of alpha_1 .. alpha_6
 	 * to get S_1 .. S_6 (but we index them from 0).
 	 */
-	if (!format_syndromes(u, s))
+	if (!format_syndromes(u, s)) {
+		#ifdef QUIRC_USE_HEAP
+		free(s);
+		#endif
+
 		return QUIRC_SUCCESS;
+	}
+
+	#ifdef QUIRC_USE_HEAP
+	uint8_t *sigma = (uint8_t*)calloc(MAX_POLY, sizeof(uint8_t));
+	#else
+	uint8_t sigma[MAX_POLY] = {0};
+	#endif
 
 	berlekamp_massey(s, FORMAT_SYNDROMES, &gf16, sigma);
 
@@ -386,6 +449,10 @@ static quirc_decode_error_t correct_format(uint16_t *f_ret)
 	for (i = 0; i < 15; i++)
 		if (!poly_eval(sigma, gf16_exp[15 - i], &gf16))
 			u ^= (1 << i);
+
+	#ifdef QUIRC_USE_HEAP
+	free(sigma);
+	#endif
 
 	if (format_syndromes(u, s))
 		return QUIRC_ERROR_FORMAT_ECC;
@@ -884,29 +951,34 @@ quirc_decode_error_t quirc_decode(const struct quirc_code *code,
 				  struct quirc_data *data)
 {
 	quirc_decode_error_t err;
-	struct datastream ds;
 
-	if (code->size > QUIRC_MAX_GRID_SIZE)
-		return QUIRC_ERROR_INVALID_GRID_SIZE;
+	#ifdef QUIRC_USE_HEAP
+	struct datastream *dsp = (struct datastream*)calloc(1, sizeof(struct datastream));
+	#else
+	struct datastream ds = {0};
+	struct datastream *dsp = &ds;
+	#endif
 
-	if ((code->size - 17) % 4)
-		return QUIRC_ERROR_INVALID_GRID_SIZE;
+	memset(data, 0, sizeof(struct quirc_data) * 1);
 
-	memset(data, 0, sizeof(*data));
-	memset(&ds, 0, sizeof(ds));
+	if (code->size > QUIRC_MAX_GRID_SIZE || (code->size - 17) % 4) {
+		err = QUIRC_ERROR_INVALID_GRID_SIZE;
+		goto on_error;
+	}
 
 	data->version = (code->size - 17) / 4;
 
-	if (data->version < 1 ||
-	    data->version > QUIRC_MAX_VERSION)
-		return QUIRC_ERROR_INVALID_VERSION;
+	if (data->version < 1 || data->version > QUIRC_MAX_VERSION) {
+		err = QUIRC_ERROR_INVALID_VERSION;
+		goto on_error;
+	}
 
 	/* Read format information -- try both locations */
 	err = read_format(code, data, 0);
 	if (err)
 		err = read_format(code, data, 1);
 	if (err)
-		return err;
+		goto on_error;
 
 	/*
 	 * Borrow data->payload to store the raw bits.
@@ -916,20 +988,31 @@ quirc_decode_error_t quirc_decode(const struct quirc_code *code,
 	 * on the stack.
 	 */
 
-	ds.raw = data->payload;
+	dsp->raw = data->payload;
 
-	read_data(code, data, &ds);
-	err = codestream_ecc(data, &ds);
+	read_data(code, data, dsp);
+	err = codestream_ecc(data, dsp);
 	if (err)
-		return err;
+		goto on_error;
 
-	ds.raw = NULL; /* We've done with this buffer. */
+	dsp->raw = NULL; /* We've done with this buffer. */
 
-	err = decode_payload(data, &ds);
+	err = decode_payload(data, dsp);
 	if (err)
-		return err;
+		goto on_error;
+
+	#ifdef QUIRC_USE_HEAP
+	free(dsp);
+	#endif
 
 	return QUIRC_SUCCESS;
+
+	on_error:
+		#ifdef QUIRC_USE_HEAP
+		free(dsp);
+		#endif
+
+		return err;
 }
 
 void quirc_flip(struct quirc_code *code)

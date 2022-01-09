@@ -289,8 +289,12 @@ static uint8_t otsu(const struct quirc *q)
 	unsigned int numPixels = q->w * q->h;
 
 	// Calculate histogram
-	unsigned int histogram[UINT8_MAX + 1];
-	(void)memset(histogram, 0, sizeof(histogram));
+	#ifdef QUIRC_USE_HEAP
+	unsigned int *histogram = (unsigned int*)calloc(UINT8_MAX + 1, sizeof(unsigned int));
+	#else
+	unsigned int histogram[UINT8_MAX + 1] = {0};
+	#endif
+
 	uint8_t* ptr = q->image;
 	unsigned int length = numPixels;
 	while (length--) {
@@ -331,6 +335,10 @@ static uint8_t otsu(const struct quirc *q)
 			max = variance;
 		}
 	}
+
+	#ifdef QUIRC_USE_HEAP
+	free(histogram);
+	#endif
 
 	return threshold;
 }
@@ -671,11 +679,11 @@ static void measure_grid_size(struct quirc *q, int index)
 	double bc = length(b->corners[0], c->corners[1]);
 	double capstone_bc_size = (length(b->corners[0], b->corners[1]) + length(c->corners[0], c->corners[1]))/2.0;
 	double hor_grid = 7.0 * bc / capstone_bc_size;
-	
+
 	double grid_size_estimate = (ver_grid + hor_grid) / 2;
 
 	int ver = (int)((grid_size_estimate - 17.0 + 2.0) / 4.0);
-	
+
 	qr->grid_size =  4*ver + 17;
 }
 
