@@ -102,10 +102,10 @@ the default macros like CFLAGS from sys.mk can cause unintended effects.
 
 Installation
 ------------
-To build the library and associated demos/tests, type `make`. If you need to
-decode "large" image files build with `CFLAGS="-DQUIRC_MAX_REGIONS=65534" make`
-instead. Note that this will increase the memory usage, it is discouraged for
-low resource devices (i.e. embedded).
+To build the library and associated demos/tests, type `make`.
+
+Several options can be adjusted at compile time by passing additional arguments
+to `make`. See [Compile-time options](#compile-time-options) section below for details.
 
 Type `make install` to install the library, header file and camera demos.
 
@@ -235,6 +235,34 @@ decode attempt with the flipped image data whenever you get an ECC failure:
     else
         printf("Data: %s\n", data.payload);
 ```
+
+Compile-time options
+--------------------
+
+The following compile-time options can be used to adjust the library to a
+particular use case.
+
+Each option is a C preprocessor macro. To set an option, add it to CFLAGS
+using `-DOPTION=VALUE` syntax, for example:
+```bash
+make CFLAGS="-DQUIRC_MAX_REGIONS=65534"
+```
+
+* `QUIRC_MAX_REGIONS`: If you need to decode "large" image files, set
+   `QUIRC_MAX_REGIONS=65534`. Note that since this will increase the memory
+   usage, it is discouraged for low resource devices (i.e. embedded).
+
+* `QUIRC_FLOAT_TYPE`: If defined, it sets the type name to use
+   in floating point calculations. For example, on an embedded system
+   with only a single precision FPU, set `QUIRC_FLOAT_TYPE=float` to
+   improve performance.
+
+* `QUIRC_USE_TGMATH`: if defined, quirc will internally use `<tgmath.h>`
+   header instead of `<math.h>`, ensuring that the math function calls
+   use the same precision as the arguments. Define this option if you are
+   setting `QUIRC_FLOAT_TYPE=float` and the compiler supports C99 or later
+   language standard. 
+
 
 Copyright
 ---------
