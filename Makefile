@@ -15,8 +15,8 @@
 
 CC ?= gcc
 PREFIX ?= /usr/local
-SDL_CFLAGS := $(shell pkg-config --cflags sdl 2>&1)
-SDL_LIBS = $(shell pkg-config --libs sdl)
+SDL_CFLAGS := $(shell pkg-config --cflags sdl SDL_gfx 2>&1)
+SDL_LIBS = $(shell pkg-config --libs sdl SDL_gfx)
 
 LIB_VERSION = 1.2
 
