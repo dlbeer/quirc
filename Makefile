@@ -20,6 +20,14 @@ SDL_LIBS = $(shell pkg-config --libs sdl)
 
 LIB_VERSION = 1.2
 
+ifeq ($(shell uname), Darwin)
+    LIB_SUFFIX := dylib
+    VERSIONED_LIB_SUFFIX := $(LIB_VERSION).$(LIB_SUFFIX)
+else
+    LIB_SUFFIX := so
+    VERSIONED_LIB_SUFFIX := $(LIB_SUFFIX).$(LIB_VERSION)
+endif
+
 CFLAGS ?= -O3 -Wall -fPIC
 QUIRC_CFLAGS = -Ilib $(CFLAGS) $(SDL_CFLAGS)
 LIB_OBJ = \
@@ -41,7 +49,7 @@ QUIRC_CXXFLAGS = $(QUIRC_CFLAGS) $(OPENCV_CFLAGS) --std=c++17
 
 .PHONY: all v4l sdl opencv install uninstall clean
 
-all: libquirc.so qrtest
+all: libquirc.$(LIB_SUFFIX) qrtest
 
 v4l: quirc-scanner
 
@@ -72,10 +80,10 @@ libquirc.a: $(LIB_OBJ)
 	ar cru $@ $(LIB_OBJ)
 	ranlib $@
 
-.PHONY: libquirc.so
-libquirc.so: libquirc.so.$(LIB_VERSION)
+libquirc.$(LIB_SUFFIX): libquirc.$(VERSIONED_LIB_SUFFIX)
+	ln -s $< $@
 
-libquirc.so.$(LIB_VERSION): $(LIB_OBJ)
+libquirc.$(VERSIONED_LIB_SUFFIX): $(LIB_OBJ)
 	$(CC) -shared -o $@ $(LIB_OBJ) $(LDFLAGS) -lm
 
 .c.o:
@@ -85,18 +93,19 @@ libquirc.so.$(LIB_VERSION): $(LIB_OBJ)
 .cxx.o:
 	$(CXX) $(QUIRC_CXXFLAGS) -o $@ -c $<
 
-install: libquirc.a libquirc.so.$(LIB_VERSION) quirc-demo quirc-scanner
+install: libquirc.a libquirc.$(LIB_SUFFIX) quirc-demo quirc-scanner
 	install -o root -g root -m 0644 lib/quirc.h $(DESTDIR)$(PREFIX)/include
 	install -o root -g root -m 0644 libquirc.a $(DESTDIR)$(PREFIX)/lib
-	install -o root -g root -m 0755 libquirc.so.$(LIB_VERSION) \
+	install -o root -g root -m 0755 libquirc.$(VERSIONED_LIB_SUFFIX) \
 		$(DESTDIR)$(PREFIX)/lib
+	cp -d libquirc.$(LIB_SUFFIX) $(DESTDIR)$(PREFIX)/lib
 	install -o root -g root -m 0755 quirc-demo $(DESTDIR)$(PREFIX)/bin
 	# install -o root -g root -m 0755 quirc-demo-opencv $(DESTDIR)$(PREFIX)/bin
 	install -o root -g root -m 0755 quirc-scanner $(DESTDIR)$(PREFIX)/bin
 
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/include/quirc.h
-	rm -f $(DESTDIR)$(PREFIX)/lib/libquirc.so.$(LIB_VERSION)
+	rm -f $(DESTDIR)$(PREFIX)/lib/libquirc.{$(LIB_SUFFIX),$(VERSIONED_LIB_SUFFIX)}
 	rm -f $(DESTDIR)$(PREFIX)/lib/libquirc.a
 	rm -f $(DESTDIR)$(PREFIX)/bin/quirc-demo
 	rm -f $(DESTDIR)$(PREFIX)/bin/quirc-demo-opencv
@@ -106,7 +115,7 @@ clean:
 	rm -f */*.o
 	rm -f */*.lo
 	rm -f libquirc.a
-	rm -f libquirc.so.$(LIB_VERSION)
+	rm -f libquirc.{$(LIB_SUFFIX),$(VERSIONED_LIB_SUFFIX)}
 	rm -f qrtest
 	rm -f inspect
 	rm -f inspect-opencv
