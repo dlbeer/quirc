@@ -15,8 +15,8 @@
 
 CC ?= gcc
 PREFIX ?= /usr/local
-SDL_CFLAGS := $(shell pkg-config --cflags sdl 2>&1)
-SDL_LIBS = $(shell pkg-config --libs sdl)
+SDL_CFLAGS := $(shell pkg-config --cflags sdl 2> /dev/null)
+SDL_LIBS = $(shell pkg-config --libs sdl 2> /dev/null)
 
 LIB_VERSION = 1.2
 
@@ -43,8 +43,8 @@ DEMO_UTIL_OBJ = \
     demo/dthash.o \
     demo/demoutil.o
 
-OPENCV_CFLAGS := $(shell pkg-config --cflags opencv4 2>&1)
-OPENCV_LIBS = $(shell pkg-config --libs opencv4)
+OPENCV_CFLAGS := $(shell pkg-config --cflags opencv4 2> /dev/null)
+OPENCV_LIBS = $(shell pkg-config --libs opencv4 2> /dev/null)
 QUIRC_CXXFLAGS = $(QUIRC_CFLAGS) $(OPENCV_CFLAGS) --std=c++17
 
 .PHONY: all v4l sdl opencv install uninstall clean
