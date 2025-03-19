@@ -24,7 +24,7 @@ a good choice for this purpose:
 * It uses no global mutable state, and is safe to use in a multithreaded
   application.
 
-* BSD-licensed, with almost no restrictions regarding use and/or modification.
+* ISC-licensed, with almost no restrictions regarding use and/or modification.
 
 The distribution comes with, in addition to the library, several test programs.
 While the core library is very portable, these programs have some additional
