@@ -71,9 +71,14 @@ int quirc_resize(struct quirc *q, int w, int h)
 		goto fail;
 
 	/* compute the "old" (i.e. currently allocated) and the "new"
-	   (i.e. requested) image dimensions */
-	size_t olddim = q->w * q->h;
-	size_t newdim = w * h;
+	   (i.e. requested) image dimensions. Cast to size_t *before*
+	   multiplying: w, h and q->w, q->h are int, so "w * h" would
+	   otherwise be evaluated in (signed) int arithmetic and can
+	   overflow for large-but-valid dimensions (e.g. 50000x50000),
+	   corrupting the memcpy() bound below via a bogus wrapped
+	   value instead of failing safely. */
+	size_t olddim = (size_t)q->w * (size_t)q->h;
+	size_t newdim = (size_t)w * (size_t)h;
 	size_t min = (olddim < newdim ? olddim : newdim);
 
 	/*
