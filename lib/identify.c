@@ -290,13 +290,13 @@ static void flood_fill_seed(struct quirc *q,
 
 static uint8_t otsu(const struct quirc *q)
 {
-	unsigned int numPixels = q->w * q->h;
+	size_t num_pixels = quirc_pixel_count(q);
 
 	// Calculate histogram
-	unsigned int histogram[UINT8_MAX + 1];
+	size_t histogram[UINT8_MAX + 1];
 	(void)memset(histogram, 0, sizeof(histogram));
 	uint8_t* ptr = q->image;
-	unsigned int length = numPixels;
+	size_t length = num_pixels;
 	while (length--) {
 		uint8_t value = *ptr++;
 		histogram[value]++;
@@ -306,12 +306,12 @@ static uint8_t otsu(const struct quirc *q)
 	quirc_float_t sum = (quirc_float_t)0;
 	unsigned int i = 0;
 	for (i = 0; i <= UINT8_MAX; ++i) {
-		sum += i * histogram[i];
+		sum += (quirc_float_t)i * histogram[i];
 	}
 
 	// Compute threshold
 	quirc_float_t sumB = (quirc_float_t)0;
-	unsigned int q1 = 0;
+	size_t q1 = 0;
 	quirc_float_t max = (quirc_float_t)0;
 	uint8_t threshold = 0;
 	for (i = 0; i <= UINT8_MAX; ++i) {
@@ -321,11 +321,11 @@ static uint8_t otsu(const struct quirc *q)
 			continue;
 
 		// Weighted foreground
-		const unsigned int q2 = numPixels - q1;
+		const size_t q2 = num_pixels - q1;
 		if (q2 == 0)
 			break;
 
-		sumB += i * histogram[i];
+		sumB += (quirc_float_t)i * histogram[i];
 		const quirc_float_t m1 = sumB / q1;
 		const quirc_float_t m2 = (sum - sumB) / q2;
 		const quirc_float_t m1m2 = m1 - m2;
@@ -1080,7 +1080,7 @@ static void pixels_setup(struct quirc *q, uint8_t threshold)
 
 	uint8_t* source = q->image;
 	quirc_pixel_t* dest = q->pixels;
-	int length = q->w * q->h;
+	size_t length = quirc_pixel_count(q);
 	while (length--) {
 		uint8_t value = *source++;
 		*dest++ = (value < threshold) ? QUIRC_PIXEL_BLACK : QUIRC_PIXEL_WHITE;

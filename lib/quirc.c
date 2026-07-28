@@ -77,8 +77,8 @@ int quirc_resize(struct quirc *q, int w, int h)
 	   overflow for large-but-valid dimensions (e.g. 50000x50000),
 	   corrupting the memcpy() bound below via a bogus wrapped
 	   value instead of failing safely. */
-	size_t olddim = (size_t)q->w * (size_t)q->h;
-	size_t newdim = (size_t)w * (size_t)h;
+	size_t olddim = quirc_pixel_count(q);
+	size_t newdim = quirc_image_size(w, h);
 	size_t min = (olddim < newdim ? olddim : newdim);
 
 	/*
