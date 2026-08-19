@@ -612,7 +612,7 @@ static void find_alignment_pattern(struct quirc *q, int index)
 	 * alignment pattern must lie within the image, so also cap the search
 	 * radius at the image size.
 	 */
-	int max_step = (q->w > q->h ? q->w : q->h) + 1;
+	const int max_step = (q->w > q->h ? q->w : q->h) + 1;
 	while (step_size * step_size < size_estimate * 100 && step_size <= max_step) {
 		static const int dx_map[] = {1, 0, -1, 0};
 		static const int dy_map[] = {0, -1, 0, 1};

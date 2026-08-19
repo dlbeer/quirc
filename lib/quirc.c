@@ -81,7 +81,7 @@ int quirc_resize(struct quirc *q, int w, int h)
 	 * old buffer when the new size is greater and (b) to write beyond the
 	 * new buffer when the new size is smaller, hence the min computation.
 	 */
-	if (min)
+	if (min > 0)
 		(void)memcpy(image, q->image, min);
 
 	/* alloc a new buffer for q->pixels if needed */
