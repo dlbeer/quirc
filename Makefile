@@ -60,6 +60,9 @@ opencv: inspect-opencv quirc-demo-opencv
 qrtest: tests/dbgutil.o tests/qrtest.o libquirc.a
 	$(CC) -o $@ tests/dbgutil.o tests/qrtest.o libquirc.a $(LDFLAGS) -lm -ljpeg -lpng
 
+overflow_test: tests/overflow_test.o
+	$(CC) -o $@ tests/overflow_test.o $(LDFLAGS)
+
 inspect: tests/dbgutil.o tests/inspect.o libquirc.a
 	$(CC) -o $@ tests/dbgutil.o tests/inspect.o libquirc.a $(LDFLAGS) -lm -ljpeg -lpng $(SDL_LIBS) -lSDL_gfx
 
@@ -117,6 +120,7 @@ clean:
 	rm -f libquirc.a
 	rm -f libquirc.{$(LIB_SUFFIX),$(VERSIONED_LIB_SUFFIX)}
 	rm -f qrtest
+	rm -f overflow_test
 	rm -f inspect
 	rm -f inspect-opencv
 	rm -f quirc-demo
