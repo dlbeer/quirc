@@ -263,6 +263,28 @@ make CFLAGS="-DQUIRC_MAX_REGIONS=65534"
    setting `QUIRC_FLOAT_TYPE=float` and the compiler supports C99 or later
    language standard. 
 
+Building with Docker
+--------------------
+
+To build the library and associated demos/tests using Docker, you can use the provided Dockerfile. The Dockerfile installs the necessary build dependencies for Alpine Linux. To build the quirc library and demos/tests, follow these steps:
+
+1. Make sure you have Docker installed on your system.
+
+2. Clone the quirc repository to your local machine.
+
+3. Open a terminal or command prompt and navigate to the quirc directory.
+
+4. Build the Docker image with the following command:
+
+   ```docker build -t quirc_build .```
+
+5. Once the Docker image is built, you can run a container from it with the following command:
+
+   ```docker run --rm -it --name quirc_build_container -v $PWD:/quirc quirc_build sh -c "make"```
+   
+By following these steps, you can build the quirc library and demos/tests using Docker, which provides a reproducible and isolated build environment.
+
+Please note that this Dockerfile is designed for Alpine Linux. If you are using a different Linux distribution, you may need to adjust the package names in the Dockerfile accordingly.
 
 Copyright
 ---------
