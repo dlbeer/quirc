@@ -49,7 +49,7 @@ QUIRC_CXXFLAGS = $(QUIRC_CFLAGS) $(OPENCV_CFLAGS) --std=c++17
 
 .PHONY: all v4l sdl opencv install uninstall clean
 
-all: libquirc.$(LIB_SUFFIX) qrtest
+all: libquirc.$(LIB_SUFFIX) qrtest quirc.pc
 
 v4l: quirc-scanner
 
@@ -89,6 +89,11 @@ libquirc.$(LIB_SUFFIX): libquirc.$(VERSIONED_LIB_SUFFIX)
 libquirc.$(VERSIONED_LIB_SUFFIX): $(LIB_OBJ)
 	$(CC) -shared -o $@ $(LIB_OBJ) $(LDFLAGS) -lm
 
+quirc.pc: quirc.pc.in
+	sed -e 's|@PREFIX@|$(PREFIX)|g' \
+	    -e 's|@VERSION@|$(LIB_VERSION)|g' \
+	    quirc.pc.in > quirc.pc
+
 .c.o:
 	$(CC) $(QUIRC_CFLAGS) -o $@ -c $<
 
@@ -96,7 +101,7 @@ libquirc.$(VERSIONED_LIB_SUFFIX): $(LIB_OBJ)
 .cxx.o:
 	$(CXX) $(QUIRC_CXXFLAGS) -o $@ -c $<
 
-install: libquirc.a libquirc.$(LIB_SUFFIX) quirc-demo quirc-scanner
+install: libquirc.a libquirc.$(LIB_SUFFIX) quirc-demo quirc-scanner quirc.pc
 	install -o root -g root -m 0644 lib/quirc.h $(DESTDIR)$(PREFIX)/include
 	install -o root -g root -m 0644 libquirc.a $(DESTDIR)$(PREFIX)/lib
 	install -o root -g root -m 0755 libquirc.$(VERSIONED_LIB_SUFFIX) \
@@ -105,6 +110,8 @@ install: libquirc.a libquirc.$(LIB_SUFFIX) quirc-demo quirc-scanner
 	install -o root -g root -m 0755 quirc-demo $(DESTDIR)$(PREFIX)/bin
 	# install -o root -g root -m 0755 quirc-demo-opencv $(DESTDIR)$(PREFIX)/bin
 	install -o root -g root -m 0755 quirc-scanner $(DESTDIR)$(PREFIX)/bin
+	install -d $(DESTDIR)$(PREFIX)/lib/pkgconfig
+	install -o root -g root -m 0644 quirc.pc $(DESTDIR)$(PREFIX)/lib/pkgconfig
 
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/include/quirc.h
@@ -113,6 +120,7 @@ uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/quirc-demo
 	rm -f $(DESTDIR)$(PREFIX)/bin/quirc-demo-opencv
 	rm -f $(DESTDIR)$(PREFIX)/bin/quirc-scanner
+	rm -f $(DESTDIR)$(PREFIX)/lib/pkgconfig/quirc.pc
 
 clean:
 	rm -f */*.o
@@ -126,3 +134,4 @@ clean:
 	rm -f quirc-demo
 	rm -f quirc-demo-opencv
 	rm -f quirc-scanner
+	rm -f quirc.pc

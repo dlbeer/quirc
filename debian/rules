@@ -1,0 +1,29 @@
+#!/usr/bin/make -f
+
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+export DEB_CFLAGS_MAINT_APPEND = -Wall -pedantic
+export DEB_LDFLAGS_MAINT_APPEND = -Wl,--as-needed
+
+%:
+	dh $@
+
+override_dh_auto_build:
+	$(MAKE) all v4l SDL_CFLAGS= SDL_LIBS= CFLAGS="-O3 -Wall -fPIC -DQUIRC_MAX_REGIONS=65534"
+
+override_dh_auto_install:
+	# Install only the components we need without SDL dependencies
+	mkdir -p $(CURDIR)/debian/tmp/usr/lib
+	mkdir -p $(CURDIR)/debian/tmp/usr/include
+	mkdir -p $(CURDIR)/debian/tmp/usr/bin
+	mkdir -p $(CURDIR)/debian/tmp/usr/lib/pkgconfig
+
+	# Install library files directly to tmp, let dh_install handle distribution
+	install -m 0644 lib/quirc.h $(CURDIR)/debian/tmp/usr/include/
+	install -m 0644 libquirc.a $(CURDIR)/debian/tmp/usr/lib/
+	install -m 0755 libquirc.so.1.2 $(CURDIR)/debian/tmp/usr/lib/
+	ln -s libquirc.so.1.2 $(CURDIR)/debian/tmp/usr/lib/libquirc.so
+	install -m 0755 quirc-scanner $(CURDIR)/debian/tmp/usr/bin/
+	install -m 0644 quirc.pc $(CURDIR)/debian/tmp/usr/lib/pkgconfig/
+
+override_dh_auto_clean:
+	$(MAKE) clean

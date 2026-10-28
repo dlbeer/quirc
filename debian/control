@@ -1,0 +1,47 @@
+Source: quirc
+Section: libs
+Priority: optional
+Maintainer: Daniel Beer <dlbeer@gmail.com>
+Build-Depends: debhelper-compat (= 13),
+               pkg-config,
+               libjpeg-dev
+Standards-Version: 4.6.2
+Homepage: https://github.com/dlbeer/quirc
+Vcs-Git: https://github.com/dlbeer/quirc.git
+Vcs-Browser: https://github.com/dlbeer/quirc
+
+Package: libquirc1
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: QR code recognition library
+ Quirc is a library for extracting and decoding QR codes from images.
+ It has several features which make it a good choice for this purpose:
+ .
+  * It is fast enough to be used with realtime video
+  * It has a robust and tolerant recognition algorithm
+  * It is easy to use, with a simple API
+  * It is small and easily embeddable
+  * It has a very small memory footprint
+  * It uses no global mutable state, and is safe to use in a multithreaded
+    application
+  * ISC-licensed, with almost no restrictions regarding use and/or modification
+
+Package: libquirc-dev
+Section: libdevel
+Architecture: any
+Depends: libquirc1 (= ${binary:Version}), ${misc:Depends}
+Description: QR code recognition library - development files
+ Quirc is a library for extracting and decoding QR codes from images.
+ .
+ This package contains the development files (headers and static library)
+ for libquirc.
+
+Package: quirc-utils
+Section: utils
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: QR code recognition utilities
+ Quirc is a library for extracting and decoding QR codes from images.
+ .
+ This package contains command-line utilities:
+  * quirc-scanner: command-line QR code scanner

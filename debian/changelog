@@ -1,0 +1,5 @@
+quirc (1.2+deb12-1) unstable; urgency=medium
+
+  * Initial Debian package
+
+ -- Daniel Beer <dlbeer@gmail.com>  Tue, 01 Jul 2025 12:00:00 +0000

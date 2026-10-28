@@ -1,0 +1,3 @@
+usr/include/quirc.h
+usr/lib/libquirc.a
+usr/lib/pkgconfig/quirc.pc
