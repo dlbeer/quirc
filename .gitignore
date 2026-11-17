@@ -3,6 +3,7 @@
 quirc-demo
 quirc-scanner
 qrtest
+border_test
 inspect
 libquirc.a
 libquirc.so*
