@@ -541,8 +541,9 @@ static void finder_scan(struct quirc *q, unsigned int y)
 	unsigned int pb[5];
 
 	memset(pb, 0, sizeof(pb));
-	for (x = 0; x < q->w; x++) {
-		int color = row[x] ? 1 : 0;
+	/* A virtual white pixel closes a black run at the right edge. */
+	for (x = 0; x <= q->w; x++) {
+		int color = x < q->w && row[x];
 
 		if (x && color != last_color) {
 			memmove(pb, pb + 1, sizeof(pb[0]) * 4);
